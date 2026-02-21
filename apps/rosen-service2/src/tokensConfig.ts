@@ -1,5 +1,5 @@
 import { AbstractLogger, DummyLogger } from '@rosen-bridge/abstract-logger';
-import { TokenMap } from '@rosen-bridge/extended-tokens';
+import { ExtendedTokenMap, TokenMap } from '@rosen-bridge/extended-tokens';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -7,7 +7,7 @@ import { configs } from './configs';
 
 class TokensConfig {
   private static instance: TokensConfig;
-  protected tokenMap: TokenMap;
+  protected tokenMap: TokenMap | ExtendedTokenMap;
 
   private constructor(protected logger: AbstractLogger = new DummyLogger()) {
     this.logger.debug(`New instance of TokensConfig created`);
@@ -18,8 +18,8 @@ class TokensConfig {
    * @param tokensPath path to tokens json file
    */
   static async init(logger?: AbstractLogger): Promise<void> {
-    if (!TokensConfig.instance) {
-      const tokensPath = path.resolve(configs.paths.tokens);
+    if (!TokensConfig.instance && !configs.tokenMap.onChainTokenMapEnabled) {
+      const tokensPath = path.resolve(configs.tokenMap.path!);
       if (!fs.existsSync(tokensPath)) {
         throw new Error(`tokensMap file with path ${tokensPath} doesn't exist`);
       }
@@ -50,6 +50,13 @@ class TokensConfig {
    */
   getTokenMap(): TokenMap {
     return this.tokenMap;
+  }
+
+  /**
+   * @returns the token map
+   */
+  setTokenMap(tokenMap: TokenMap): void {
+    this.tokenMap = tokenMap;
   }
 }
 

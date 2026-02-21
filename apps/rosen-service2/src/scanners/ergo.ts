@@ -178,45 +178,49 @@ export const initializeErgoScanner = async (dataSource: DataSource) => {
       `cannot create or register event trigger extractors due to error: ${error}`,
     );
   }
+  if (configs.tokenMap.onChainTokenMapEnabled) {
+    try {
+      if (!configs.contracts.ergo.addresses.tokenMap) {
+        throw new Error(`on-chain-token-map address in not defined`);
+      }
+      if (!configs.contracts.ergo.tokens.tokenMap) {
+        throw new Error(`on-chain-token-map token in not defined`);
+      }
 
-  try {
-    if (!configs.contracts.ergo.addresses.tokenMap) {
-      throw new Error(`on-chain-token-map address in not defined`);
+      const tokenMapBoxExtractor = new ErgoUTXOExtractor(
+        dataSource,
+        TOKEN_MAP_EXTRACTOR_ID,
+        ergoLib.NetworkPrefix.Mainnet,
+        url,
+        networkType,
+        configs.contracts.ergo.addresses.tokenMap,
+        [configs.contracts.ergo.tokens.tokenMap],
+        logger.child(TOKEN_MAP_EXTRACTOR_LOGGER_NAME),
+      );
+      await ergoScanner.registerExtractor(tokenMapBoxExtractor);
+
+      TokensConfig.getInstance().setTokenMap(new ExtendedTokenMap());
+
+      const redis = createClient({
+        url: configs.redis.address,
+        token: configs.redis.token,
+      });
+
+      const updateTokenMapWrapper = async () =>
+        await updateTokenMap(
+          TokensConfig.getInstance().getTokenMap() as ExtendedTokenMap,
+          redis,
+        );
+
+      tokenMapBoxExtractor.hook(CallbackType.Insert, updateTokenMapWrapper);
+      tokenMapBoxExtractor.hook(CallbackType.Update, updateTokenMapWrapper);
+      tokenMapBoxExtractor.hook(CallbackType.Spend, updateTokenMapWrapper);
+      tokenMapBoxExtractor.hook(CallbackType.Delete, updateTokenMapWrapper);
+    } catch (error) {
+      throw new Error(
+        `cannot create or register token map box extractor due to error: ${error}`,
+      );
     }
-    if (!configs.contracts.ergo.tokens.tokenMap) {
-      throw new Error(`on-chain-token-map token in not defined`);
-    }
-
-    const tokenMapBoxExtractor = new ErgoUTXOExtractor(
-      dataSource,
-      TOKEN_MAP_EXTRACTOR_ID,
-      ergoLib.NetworkPrefix.Mainnet,
-      url,
-      networkType,
-      configs.contracts.ergo.addresses.tokenMap,
-      [configs.contracts.ergo.tokens.tokenMap],
-      logger.child(TOKEN_MAP_EXTRACTOR_LOGGER_NAME),
-    );
-    await ergoScanner.registerExtractor(tokenMapBoxExtractor);
-
-    const tokenMap = new ExtendedTokenMap();
-
-    const redis = createClient({
-      url: configs.redis.address,
-      token: configs.redis.token,
-    });
-
-    const updateTokenMapWrapper = async () =>
-      await updateTokenMap(tokenMap, redis);
-
-    tokenMapBoxExtractor.hook(CallbackType.Insert, updateTokenMapWrapper);
-    tokenMapBoxExtractor.hook(CallbackType.Update, updateTokenMapWrapper);
-    tokenMapBoxExtractor.hook(CallbackType.Spend, updateTokenMapWrapper);
-    tokenMapBoxExtractor.hook(CallbackType.Delete, updateTokenMapWrapper);
-  } catch (error) {
-    throw new Error(
-      `cannot create or register token map box extractor due to error: ${error}`,
-    );
   }
 
   logger.info('Ergo scanner initialization completed successfully');

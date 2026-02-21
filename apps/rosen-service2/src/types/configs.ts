@@ -1,6 +1,7 @@
 export interface RosenService2BaseConfig {
   paths: Paths;
   chains: Chains;
+  tokenMap: TokenMap;
   dataAggregator: DataAggregator;
   healthCheck: HealthCheck;
   redis: Redis;
@@ -59,6 +60,11 @@ export interface HealthCheckLogging {
 
 export interface DataAggregator {
   interval: number;
+}
+
+export interface TokenMap {
+  onChainTokenMapEnabled: boolean;
+  path?: string;
 }
 
 export interface Chains {
@@ -283,7 +289,6 @@ export interface ChainsErgoAdapter {
 }
 
 export interface Paths {
-  tokens: string;
   contracts: string;
   healthReport: string;
 }
