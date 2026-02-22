@@ -68,13 +68,13 @@ export interface TokenMap {
 }
 
 export interface Chains {
-  ergo: ChainsErgo;
-  cardano: ChainsCardano;
-  bitcoin: ChainsBitcoin;
-  bitcoinRuns: ChainsBitcoinRuns;
-  doge: ChainsDoge;
-  ethereum: ChainsEthereum;
-  binance: ChainsBinance;
+  'ergo': ChainsErgo;
+  'cardano': ChainsCardano;
+  'bitcoin': ChainsBitcoin;
+  'bitcoin-runes': ChainsBitcoinRunes;
+  'doge': ChainsDoge;
+  'ethereum': ChainsEthereum;
+  'binance': ChainsBinance;
 }
 
 export interface ChainsBinance {
@@ -166,12 +166,17 @@ export interface ChainsDogeAdapterBlockCypher {
   url: string;
 }
 
-export interface ChainsBitcoinRuns {
+export interface ChainsBitcoinRunes {
   active: boolean;
   initialHeight: number;
   scanInterval: number;
+  adapter: ChainsBitcoinRunesAdapter;
   unisatUrl: string;
   unisatApiKey?: string;
+}
+
+export interface ChainsBitcoinRunesAdapter {
+  extraAddresses?: string[];
 }
 
 export interface ChainsBitcoin {

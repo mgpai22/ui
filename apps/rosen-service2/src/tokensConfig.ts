@@ -18,12 +18,12 @@ class TokensConfig {
    * @param tokensPath path to tokens json file
    */
   static async init(logger?: AbstractLogger): Promise<void> {
-    if (!TokensConfig.instance && !configs.tokenMap.onChainTokenMapEnabled) {
+    TokensConfig.instance = new TokensConfig(logger);
+    if (!configs.tokenMap.onChainTokenMapEnabled) {
       const tokensPath = path.resolve(configs.tokenMap.path!);
       if (!fs.existsSync(tokensPath)) {
         throw new Error(`tokensMap file with path ${tokensPath} doesn't exist`);
       }
-      TokensConfig.instance = new TokensConfig(logger);
       const tokensJson: string = fs.readFileSync(tokensPath, 'utf8');
       const tokens = JSON.parse(tokensJson);
       TokensConfig.instance.tokenMap = new TokenMap();

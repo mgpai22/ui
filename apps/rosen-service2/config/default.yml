@@ -16,8 +16,8 @@ healthCheck:
 dataAggregator:
   interval: 60
 tokenMap:
-  onChainTokenMapEnabled: false
-  path: config/rosen
+  onChainTokenMapEnabled: true
+  path: config/tokensMap.json
 chains:
   ergo:
     initialHeight: 1
@@ -38,7 +38,7 @@ chains:
     active: false
     initialHeight: 1
     scanInterval: 600
-  bitcoinRuns:
+  bitcoin-runes:
     active: false
     initialHeight: 1
     scanInterval: 600
@@ -58,5 +58,5 @@ chains:
     initialHeight: 1
     scanInterval: 10
 paths:
-  contracts: config/rosen
+  contracts: config/contract.json
   healthReport: healthReport.json
