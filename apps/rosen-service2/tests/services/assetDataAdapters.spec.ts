@@ -8,7 +8,7 @@ import { describe, it, beforeEach, expect, vi, Mock } from 'vitest';
 
 import { AssetDataAdapterService } from '../../src/services/assetDataAdapters';
 import { DBService } from '../../src/services/db';
-import { TokensConfig } from '../../src/tokensConfig';
+import { TokenMapService } from '../../src/services/tokenMap';
 import {
   expectedErgoGetAssetsTotalSupplyResult,
   sampleTokenMapConfig,
@@ -36,14 +36,14 @@ describe('AssetDataAdapterService', () => {
 
       ctx.mockTokenMap = new TokenMap();
       await ctx.mockTokenMap.updateConfigByJson(sampleTokenMapConfig);
-      TokensConfig.init = vi.fn().mockImplementation(() => {
-        (TokensConfig as any).instance = {
+      TokenMapService.init = vi.fn().mockImplementation(() => {
+        (TokenMapService as any).instance = {
           tokenMap: ctx.mockTokenMap,
           logger: new DummyLogger(),
         };
       });
-      await TokensConfig.init();
-      TokensConfig.getInstance().getTokenMap = vi
+      await TokenMapService.init();
+      TokenMapService.getInstance().getTokenMap = vi
         .fn()
         .mockReturnValue(ctx.mockTokenMap);
 

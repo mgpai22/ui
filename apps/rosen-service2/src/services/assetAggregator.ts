@@ -11,10 +11,10 @@ import { createClient } from '@vercel/kv';
 
 import { configs } from '../configs';
 import { TOTAL_SUPPLY_REDIS_KEY } from '../constants';
-import { TokensConfig } from '../tokensConfig';
 import { ChainChoices, TotalSupply } from '../types';
 import { AssetDataAdapterService } from './assetDataAdapters';
 import { DBService } from './db';
+import { TokenMapService } from './tokenMap';
 
 export class AssetAggregatorService extends PeriodicTaskService {
   name = 'AssetAggregatorService';
@@ -28,6 +28,10 @@ export class AssetAggregatorService extends PeriodicTaskService {
       serviceName: AssetDataAdapterService.name,
       allowedStatuses: [ServiceStatus.running],
     },
+    {
+      serviceName: TokenMapService.name,
+      allowedStatuses: [ServiceStatus.running],
+    },
   ];
 
   private constructor(logger?: AbstractLogger) {
@@ -38,7 +42,7 @@ export class AssetAggregatorService extends PeriodicTaskService {
       token: configs.redis.token,
     });
     this.assetAggregator = new AssetAggregator(
-      TokensConfig.getInstance().getTokenMap(),
+      TokenMapService.getInstance().getTokenMap(),
       this.dbService.dataSource,
       this.logger,
     );

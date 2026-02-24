@@ -7,9 +7,9 @@ import { BinanceRpcObservationExtractor } from '@rosen-bridge/evm-observation-ex
 import { EvmRpcNetwork, EvmRpcScanner } from '@rosen-bridge/evm-scanner';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
 import { TransactionResponse } from 'ethers';
+import { TokenMapService } from 'services/tokenMap';
 
 import { configs } from '../configs';
-import { TokensConfig } from '../tokensConfig';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
 
@@ -45,7 +45,7 @@ export const buildBinanceRpcScannerWithExtractors = async (
   });
 
   try {
-    const tokenMap = TokensConfig.getInstance().getTokenMap();
+    const tokenMap = TokenMapService.getInstance().getTokenMap();
     logger.debug('Creating Binance observation extractor...');
     const observationExtractor = new BinanceRpcObservationExtractor(
       configs.contracts.binance.addresses.lock,

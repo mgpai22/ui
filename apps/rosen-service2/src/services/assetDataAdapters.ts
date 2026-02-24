@@ -21,10 +21,10 @@ import { createClient } from '@vercel/kv';
 
 import { configs } from '../configs';
 import { TOTAL_SUPPLY_REDIS_KEY } from '../constants';
-import { TokensConfig } from '../tokensConfig';
 import { ChainChoices, Chains, TotalSupply } from '../types';
 import { stringSerializer } from '../utils';
 import { DBService } from './db';
+import { TokenMapService } from './tokenMap';
 
 export class AssetDataAdapterService extends PeriodicTaskService {
   name = 'AssetDataAdapterService';
@@ -36,6 +36,10 @@ export class AssetDataAdapterService extends PeriodicTaskService {
   protected dependencies: Dependency[] = [
     {
       serviceName: DBService.name,
+      allowedStatuses: [ServiceStatus.running],
+    },
+    {
+      serviceName: TokenMapService.name,
       allowedStatuses: [ServiceStatus.running],
     },
   ];
@@ -83,7 +87,7 @@ export class AssetDataAdapterService extends PeriodicTaskService {
    * const adapter = createDataAdapter(NETWORKS.bitcoin.key, { url: "https://blockstream.info" });
    */
   protected createChainSpecificDataAdapter = (chain: ChainChoices) => {
-    const tokenMap = TokensConfig.getInstance().getTokenMap();
+    const tokenMap = TokenMapService.getInstance().getTokenMap();
 
     const addresses: string[] = [
       configs.contracts[chain].addresses.lock,

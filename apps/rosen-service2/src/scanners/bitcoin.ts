@@ -16,9 +16,9 @@ import {
   BitcoinEsploraTransaction,
 } from '@rosen-bridge/bitcoin-scanner';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
+import { TokenMapService } from 'services/tokenMap';
 
 import { configs } from '../configs';
-import { TokensConfig } from '../tokensConfig';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
 
@@ -63,7 +63,7 @@ export const buildBitcoinRpcScannerWithExtractors = async (
   });
 
   try {
-    const tokenMap = TokensConfig.getInstance().getTokenMap();
+    const tokenMap = TokenMapService.getInstance().getTokenMap();
 
     logger.debug('Creating Bitcoin observation extractor...');
     const observationExtractor = new BitcoinRpcObservationExtractor(
@@ -125,7 +125,7 @@ export const buildBitcoinEsploraScannerWithExtractors = async (
   });
 
   try {
-    const tokenMap = TokensConfig.getInstance().getTokenMap();
+    const tokenMap = TokenMapService.getInstance().getTokenMap();
 
     logger.debug('Creating Bitcoin observation extractor...');
     const observationExtractor = new BitcoinEsploraObservationExtractor(

@@ -1,34 +1,22 @@
-import { CallbackType } from '@rosen-bridge/abstract-extractor';
 import { DefaultLogger } from '@rosen-bridge/abstract-logger';
 import {
   FailoverStrategy,
   NetworkConnectorManager,
 } from '@rosen-bridge/abstract-scanner';
-import { ErgoUTXOExtractor } from '@rosen-bridge/address-extractor';
 import { ErgoObservationExtractor } from '@rosen-bridge/ergo-observation-extractor';
 import {
   ErgoExplorerNetwork,
   ErgoNodeNetwork,
   ErgoScanner,
 } from '@rosen-bridge/ergo-scanner';
-import { ExtendedTokenMap } from '@rosen-bridge/extended-tokens';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
 import { ErgoNetworkType, Transaction } from '@rosen-bridge/scanner-interfaces';
 import { EventTriggerExtractor } from '@rosen-bridge/watcher-data-extractor';
 import { NETWORKS } from '@rosen-ui/constants';
-import { createClient, VercelKV } from '@vercel/kv';
-import crypto from 'crypto';
-import * as ergoLib from 'ergo-lib-wasm-nodejs';
+import { TokenMapService } from 'services/tokenMap';
 
 import { configs } from '../configs';
-import {
-  ERGO_METHOD_EXPLORER,
-  TOKEN_MAP_EXTRACTOR_ID,
-  TOKEN_MAP_EXTRACTOR_LOGGER_NAME,
-  TOKEN_MAP_REDIS_KEY,
-} from '../constants';
-import { DBService } from '../services/db';
-import { TokensConfig } from '../tokensConfig';
+import { ERGO_METHOD_EXPLORER } from '../constants';
 import { ChainConfigs } from '../types';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
@@ -99,7 +87,7 @@ export const initializeErgoScanner = async (dataSource: DataSource) => {
   const ergoObservationExtractor = new ErgoObservationExtractor(
     configs.contracts.ergo.addresses.lock,
     dataSource,
-    TokensConfig.getInstance().getTokenMap(),
+    TokenMapService.getInstance().getTokenMap(),
     logger.child('ergoObservationExtractor'),
   );
   await ergoScanner.registerExtractor(ergoObservationExtractor);
@@ -188,70 +176,7 @@ export const initializeErgoScanner = async (dataSource: DataSource) => {
       `cannot create or register event trigger extractors due to error: ${error}`,
     );
   }
-  if (configs.tokenMap.onChainTokenMapEnabled) {
-    try {
-      if (!configs.contracts.ergo.addresses.tokenMap) {
-        throw new Error(`on-chain-token-map address in not defined`);
-      }
-      if (!configs.contracts.ergo.tokens.tokenMap) {
-        throw new Error(`on-chain-token-map token in not defined`);
-      }
-
-      const tokenMapBoxExtractor = new ErgoUTXOExtractor(
-        dataSource,
-        TOKEN_MAP_EXTRACTOR_ID,
-        ergoLib.NetworkPrefix.Mainnet,
-        url,
-        networkType,
-        configs.contracts.ergo.addresses.tokenMap,
-        [configs.contracts.ergo.tokens.tokenMap],
-        logger.child(TOKEN_MAP_EXTRACTOR_LOGGER_NAME),
-      );
-      await ergoScanner.registerExtractor(tokenMapBoxExtractor);
-
-      TokensConfig.getInstance().setTokenMap(new ExtendedTokenMap());
-
-      const redis = createClient({
-        url: configs.redis.address,
-        token: configs.redis.token,
-      });
-
-      const updateTokenMapWrapper = async () =>
-        await updateTokenMap(
-          TokensConfig.getInstance().getTokenMap() as ExtendedTokenMap,
-          redis,
-        );
-
-      tokenMapBoxExtractor.hook(CallbackType.Insert, updateTokenMapWrapper);
-      tokenMapBoxExtractor.hook(CallbackType.Update, updateTokenMapWrapper);
-      tokenMapBoxExtractor.hook(CallbackType.Spend, updateTokenMapWrapper);
-      tokenMapBoxExtractor.hook(CallbackType.Delete, updateTokenMapWrapper);
-    } catch (error) {
-      throw new Error(
-        `cannot create or register token map box extractor due to error: ${error}`,
-      );
-    }
-  }
 
   logger.info('Ergo scanner initialization completed successfully');
   return ergoScanner;
-};
-
-/**
- * updates the tokenMap using
- * @param tokenMap
- * @param redis
- */
-const updateTokenMap = async (tokenMap: ExtendedTokenMap, redis: VercelKV) => {
-  const boxes = await DBService.getInstance().getTokenMapBoxes();
-
-  await tokenMap.updateConfigByBoxes(boxes.map((box) => box.serialized));
-
-  const tokenMapJSON = JSON.stringify(tokenMap.getConfig());
-  const tokenMapHash = crypto.hash('sha256', tokenMapJSON);
-
-  await redis.set(TOKEN_MAP_REDIS_KEY, {
-    hash: tokenMapHash,
-    tokenMap: tokenMap.getConfig(),
-  });
 };

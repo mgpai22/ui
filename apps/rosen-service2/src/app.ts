@@ -1,13 +1,13 @@
 import { DefaultLogger } from '@rosen-bridge/abstract-logger';
 import { ServiceManager } from '@rosen-bridge/service-manager';
 import { AssetAggregatorService } from 'services/assetAggregator';
+import { TokenMapService } from 'services/tokenMap';
 
 import dataSource from './data-source';
 import { AssetDataAdapterService } from './services/assetDataAdapters';
 import { DBService } from './services/db';
 import { HealthService } from './services/healthCheck';
 import { ScannerService } from './services/scanner';
-import { TokensConfig } from './tokensConfig';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
 
@@ -22,8 +22,8 @@ const startApp = async () => {
   );
 
   logger.debug('Initializing tokens config instance');
-  TokensConfig.init(DefaultLogger.getInstance().child('tokenMapConfig'));
-
+  TokenMapService.init(DefaultLogger.getInstance().child('tokenMapConfig'));
+  serviceManager.register(TokenMapService.getInstance());
   logger.debug('Initializing database service');
   DBService.init(dataSource, DefaultLogger.getInstance().child('dbService'));
   serviceManager.register(DBService.getInstance());

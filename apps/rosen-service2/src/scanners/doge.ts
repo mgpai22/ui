@@ -16,9 +16,9 @@ import {
   BitcoinEsploraTransaction,
 } from '@rosen-bridge/bitcoin-scanner';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
+import { TokenMapService } from 'services/tokenMap';
 
 import { configs } from '../configs';
-import { TokensConfig } from '../tokensConfig';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
 
@@ -63,7 +63,7 @@ export const buildDogeRpcScannerWithExtractors = async (
   });
 
   try {
-    const tokenMap = TokensConfig.getInstance().getTokenMap();
+    const tokenMap = TokenMapService.getInstance().getTokenMap();
     logger.debug('Creating Doge observation extractor...');
     const observationExtractor = new DogeRpcObservationExtractor(
       configs.contracts.doge.addresses.lock,
@@ -124,7 +124,7 @@ export const buildDogeEsploraScannerWithExtractors = async (
   });
 
   try {
-    const tokenMap = TokensConfig.getInstance().getTokenMap();
+    const tokenMap = TokenMapService.getInstance().getTokenMap();
     logger.debug('Creating Doge observation extractor...');
     const observationExtractor = new DogeEsploraObservationExtractor(
       configs.contracts.doge.addresses.lock,

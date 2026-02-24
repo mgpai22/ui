@@ -13,7 +13,13 @@
               "required": true,
               "error": "log type must be specified"
             },
-            { "choices": ["file", "console", "loki"] }
+            {
+              "choices": [
+                "file",
+                "console",
+                "loki"
+              ]
+            }
           ]
         },
         "maxSize": {
@@ -23,7 +29,10 @@
             {
               "required": true,
               "error": "maxSize for file log type must be specified",
-              "when": { "path": "logs.type", "value": "file" }
+              "when": {
+                "path": "logs.type",
+                "value": "file"
+              }
             }
           ]
         },
@@ -34,7 +43,10 @@
             {
               "required": true,
               "error": "maxFiles for file log type must be specified",
-              "when": { "path": "logs.type", "value": "file" }
+              "when": {
+                "path": "logs.type",
+                "value": "file"
+              }
             }
           ]
         },
@@ -44,7 +56,10 @@
             {
               "required": true,
               "error": "path for file log type must be specified",
-              "when": { "path": "logs.type", "value": "file" }
+              "when": {
+                "path": "logs.type",
+                "value": "file"
+              }
             }
           ]
         },
@@ -64,7 +79,10 @@
             {
               "required": true,
               "error": "Service-Name for the \"loki\" log type must be specified",
-              "when": { "path": "logs.type", "value": "loki" }
+              "when": {
+                "path": "logs.type",
+                "value": "loki"
+              }
             }
           ]
         },
@@ -74,7 +92,10 @@
             {
               "required": true,
               "error": "host for the \"loki\" log type must be specified",
-              "when": { "path": "logs.type", "value": "loki" }
+              "when": {
+                "path": "logs.type",
+                "value": "loki"
+              }
             }
           ]
         },
@@ -259,20 +280,20 @@
       }
     }
   },
-   "tokenMap": {
+  "tokenMap": {
     "type": "object",
     "children": {
       "onChainTokenMapEnabled": {
-  "type": "boolean",
-  "default": true,
-  "description": "Feature flag controlling whether the service loads and validates the on-chain token map.",
-  "validations": [
-    {
-      "required": true,
-      "error": "onChainTokenMapEnabled must be explicitly set"
-    }
-  ]
-},
+        "type": "boolean",
+        "default": true,
+        "description": "Feature flag controlling whether the service loads and validates the on-chain token map.",
+        "validations": [
+          {
+            "required": true,
+            "error": "onChainTokenMapEnabled must be explicitly set"
+          }
+        ]
+      },
       "path": {
         "type": "string",
         "default": "config/rosen",
@@ -280,16 +301,15 @@
           {
             "required": true,
             "error": "path for the tokenMap file must be set",
-             "when": {
-                            "path": "tokenMap.onChainTokenMapEnabled",
-                            "value": false
-                          }
+            "when": {
+              "path": "tokenMap.onChainTokenMapEnabled",
+              "value": false
+            }
           }
         ]
       }
     }
   },
-
   "chains": {
     "type": "object",
     "children": {
@@ -339,7 +359,10 @@
             "default": "explorer",
             "validations": [
               {
-                "choices": ["explorer", "node"]
+                "choices": [
+                  "explorer",
+                  "node"
+                ]
               }
             ]
           },
@@ -375,7 +398,9 @@
             "children": {
               "connections": {
                 "type": "array",
-                "default": [{}],
+                "default": [
+                  {}
+                ],
                 "items": {
                   "type": "object",
                   "children": {
@@ -427,7 +452,9 @@
             "children": {
               "extraAddresses": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             }
           },
@@ -442,10 +469,17 @@
               {
                 "required": true,
                 "error": "cardano network connection method must be set",
-                "when": { "path": "chains.cardano.active", "value": true }
+                "when": {
+                  "path": "chains.cardano.active",
+                  "value": true
+                }
               },
               {
-                "choices": ["koios", "ogmios", "blockfrost"]
+                "choices": [
+                  "koios",
+                  "ogmios",
+                  "blockfrost"
+                ]
               }
             ]
           },
@@ -457,7 +491,10 @@
               {
                 "required": true,
                 "error": "cardano initial height must be specified",
-                "when": { "path": "chains.cardano.method", "value": "koios" }
+                "when": {
+                  "path": "chains.cardano.method",
+                  "value": "koios"
+                }
               },
               {
                 "required": true,
@@ -474,7 +511,9 @@
             "children": {
               "connections": {
                 "type": "array",
-                "default": [{}],
+                "default": [
+                  {}
+                ],
                 "items": {
                   "type": "object",
                   "children": {
@@ -661,7 +700,9 @@
             "children": {
               "extraAddresses": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             }
           },
@@ -676,10 +717,16 @@
               {
                 "required": true,
                 "error": "bitcoin network connection method must be set",
-                "when": { "path": "chains.bitcoin.active", "value": true }
+                "when": {
+                  "path": "chains.bitcoin.active",
+                  "value": true
+                }
               },
               {
-                "choices": ["rpc", "esplora"]
+                "choices": [
+                  "rpc",
+                  "esplora"
+                ]
               }
             ]
           },
@@ -810,37 +857,36 @@
               }
             ]
           },
-             "adapter": {
+          "adapter": {
             "type": "object",
             "children": {
               "extraAddresses": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             }
           },
           "unisatUrl": {
-                      "type": "string",
-                      "description": "bitcoin rpc url",
-                      "validations": [
-                        {
-                          "required": true,
-                          "error": "bitcoin runs url must be specified",
-                          "when": {
-                            "path": "chains.bitcoin-runes.active",
-                            "value": true
-                          }
-                        }
-                      ]
-                    },
-            "unisatApiKey": {
-                      "type": "string"
-                    }
-                
-       
-             
-            }
+            "type": "string",
+            "description": "bitcoin rpc url",
+            "validations": [
+              {
+                "required": true,
+                "error": "bitcoin runs url must be specified",
+                "when": {
+                  "path": "chains.bitcoin-runes.active",
+                  "value": true
+                }
+              }
+            ]
           },
+          "unisatApiKey": {
+            "type": "string"
+          }
+        }
+      },
       "doge": {
         "type": "object",
         "children": {
@@ -882,7 +928,9 @@
             "children": {
               "extraAddresses": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               },
               "blockCypher": {
                 "type": "object",
@@ -912,10 +960,16 @@
               {
                 "required": true,
                 "error": "doge network connection method must be set",
-                "when": { "path": "chains.doge.active", "value": true }
+                "when": {
+                  "path": "chains.doge.active",
+                  "value": true
+                }
               },
               {
-                "choices": ["rpc", "esplora"]
+                "choices": [
+                  "rpc",
+                  "esplora"
+                ]
               }
             ]
           },
@@ -1055,7 +1109,9 @@
             "children": {
               "extraAddresses": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               },
               "chunkSize": {
                 "type": "number",
@@ -1161,7 +1217,9 @@
             "children": {
               "extraAddresses": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               },
               "chunkSize": {
                 "type": "number",
