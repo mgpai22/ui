@@ -58,5 +58,5 @@ chains:
     initialHeight: 1
     scanInterval: 10
 paths:
-  contracts: config/contract.json
+  contracts: config/contracts.json
   healthReport: healthReport.json

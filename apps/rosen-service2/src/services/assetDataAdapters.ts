@@ -1,5 +1,4 @@
 import { AbstractLogger } from '@rosen-bridge/abstract-logger';
-import JsonBigInt from '@rosen-bridge/json-bigint';
 import {
   Dependency,
   PeriodicTaskService,
@@ -24,6 +23,7 @@ import { configs } from '../configs';
 import { TOTAL_SUPPLY_REDIS_KEY } from '../constants';
 import { TokensConfig } from '../tokensConfig';
 import { ChainChoices, Chains, TotalSupply } from '../types';
+import { stringSerializer } from '../utils';
 import { DBService } from './db';
 
 export class AssetDataAdapterService extends PeriodicTaskService {
@@ -125,7 +125,8 @@ export class AssetDataAdapterService extends PeriodicTaskService {
           {
             url: configs.chains.ethereum.rpc.connections.at(0)!.url!,
             authToken:
-              configs.chains.ethereum.rpc.connections.at(0)?.authToken || '',
+              configs.chains.ethereum.rpc.connections.at(0)?.authToken ||
+              undefined,
           },
           configs.chains.ethereum.adapter.chunkSize,
           this.logger.child('ethereumDataAdapter'),
@@ -137,7 +138,8 @@ export class AssetDataAdapterService extends PeriodicTaskService {
           {
             url: configs.chains.binance.rpc.connections.at(0)!.url!,
             authToken:
-              configs.chains.binance.rpc.connections.at(0)?.authToken || '',
+              configs.chains.binance.rpc.connections.at(0)?.authToken ||
+              undefined,
           },
           configs.chains.binance.adapter.chunkSize,
           this.logger.child('binanceDataAdapter'),
@@ -216,6 +218,12 @@ export class AssetDataAdapterService extends PeriodicTaskService {
           this.createChainSpecificDataAdapter(NETWORKS['bitcoin-runes'].key);
       }
 
+      if (configs.chains['bitcoin-runes'].active) {
+        // Create bitcoin-runes data-adapter
+        this.adapters[NETWORKS['bitcoin-runes'].key] =
+          this.createChainSpecificDataAdapter(NETWORKS['bitcoin-runes'].key);
+      }
+
       if (configs.chains.doge.active) {
         // Create Doge data-adapter
         this.adapters[NETWORKS.doge.key] = this.createChainSpecificDataAdapter(
@@ -287,7 +295,7 @@ export class AssetDataAdapterService extends PeriodicTaskService {
    */
   protected preStart = async () => {
     const assets = await this.getAssetsTotalSupply();
-    this.redis.set(TOTAL_SUPPLY_REDIS_KEY, JsonBigInt.stringify(assets));
+    this.redis.set(TOTAL_SUPPLY_REDIS_KEY, stringSerializer(assets));
   };
 
   /**
@@ -326,12 +334,12 @@ export class AssetDataAdapterService extends PeriodicTaskService {
                     });
                   }
                 }
-                this.redis.set(adapter.chain, JsonBigInt.stringify(finalData));
+                this.redis.set(adapter.chain, stringSerializer(finalData));
               }
             : async () => {
                 this.redis.set(
                   adapter.chain,
-                  JsonBigInt.stringify(await adapter.fetch()),
+                  stringSerializer(await adapter.fetch()),
                 );
               },
         interval:
