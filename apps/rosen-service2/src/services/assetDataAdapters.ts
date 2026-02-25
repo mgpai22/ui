@@ -128,9 +128,7 @@ export class AssetDataAdapterService extends PeriodicTaskService {
           tokenMap,
           {
             url: configs.chains.ethereum.rpc.connections.at(0)!.url!,
-            authToken:
-              configs.chains.ethereum.rpc.connections.at(0)?.authToken ||
-              undefined,
+            authToken: configs.chains.ethereum.rpc.connections.at(0)?.authToken,
           },
           configs.chains.ethereum.adapter.chunkSize,
           this.logger.child('ethereumDataAdapter'),
@@ -141,24 +139,20 @@ export class AssetDataAdapterService extends PeriodicTaskService {
           tokenMap,
           {
             url: configs.chains.binance.rpc.connections.at(0)!.url!,
-            authToken:
-              configs.chains.binance.rpc.connections.at(0)?.authToken ||
-              undefined,
+            authToken: configs.chains.binance.rpc.connections.at(0)?.authToken,
           },
           configs.chains.binance.adapter.chunkSize,
           this.logger.child('binanceDataAdapter'),
         );
       case NETWORKS.cardano.key:
-        console.log(configs.chains.cardano.koios);
         return new CardanoKoiosDataAdapter(
           addresses,
           tokenMap,
           {
             koiosUrl: configs.chains.cardano.koios.connections.at(0)!.url,
-            authToken:
-              configs.chains.cardano.koios.connections
-                .at(0)
-                ?.authToken?.toString() || '',
+            authToken: configs.chains.cardano.koios.connections
+              .at(0)
+              ?.authToken?.toString(),
           },
           this.logger.child('cardanoDataAdapter'),
         );
@@ -200,6 +194,7 @@ export class AssetDataAdapterService extends PeriodicTaskService {
         NETWORKS.ergo.key,
       );
       configs.chains.cardano.koios.connections.at(0);
+
       if (
         configs.chains.cardano.active &&
         configs.chains.cardano.koios.connections.at(0)
@@ -208,6 +203,7 @@ export class AssetDataAdapterService extends PeriodicTaskService {
         this.adapters[NETWORKS.cardano.key] =
           this.createChainSpecificDataAdapter(NETWORKS.cardano.key);
       }
+
       if (
         configs.chains.bitcoin.active &&
         configs.chains.bitcoin.esplora.connections.at(0)
@@ -215,11 +211,6 @@ export class AssetDataAdapterService extends PeriodicTaskService {
         // Create Bitcoin data-adapter
         this.adapters[NETWORKS.bitcoin.key] =
           this.createChainSpecificDataAdapter(NETWORKS.bitcoin.key);
-      }
-      if (configs.chains['bitcoin-runes'].active) {
-        // Create Doge data-adapter
-        this.adapters[NETWORKS['bitcoin-runes'].key] =
-          this.createChainSpecificDataAdapter(NETWORKS['bitcoin-runes'].key);
       }
 
       if (configs.chains['bitcoin-runes'].active) {

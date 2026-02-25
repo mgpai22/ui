@@ -835,17 +835,6 @@
               }
             ]
           },
-          "initialHeight": {
-            "type": "number",
-            "default": 1,
-            "description": "bitcoin initial height",
-            "validations": [
-              {
-                "required": true,
-                "error": "bitcoin initial height must be specified"
-              }
-            ]
-          },
           "scanInterval": {
             "type": "number",
             "default": 600,
@@ -870,6 +859,7 @@
           },
           "unisatUrl": {
             "type": "string",
+            "default": "https://open-api.unisat.io",
             "description": "bitcoin rpc url",
             "validations": [
               {
