@@ -13,10 +13,10 @@ import { DataSource } from '@rosen-bridge/extended-typeorm';
 import { ErgoNetworkType, Transaction } from '@rosen-bridge/scanner-interfaces';
 import { EventTriggerExtractor } from '@rosen-bridge/watcher-data-extractor';
 import { NETWORKS } from '@rosen-ui/constants';
-import { TokenMapService } from 'services/tokenMap';
 
 import { configs } from '../configs';
 import { ERGO_METHOD_EXPLORER } from '../constants';
+import { TokenMapService } from '../services/tokenMap';
 import { ChainConfigs } from '../types';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);

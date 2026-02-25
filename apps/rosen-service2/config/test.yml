@@ -12,5 +12,4 @@ tokenMap:
   onChainTokenMapEnabled: false
   path: tests/config/tokensMap.json
 paths:
-  tokens: tests/config/tokensMap.json
   contracts: tests/config/contracts.json

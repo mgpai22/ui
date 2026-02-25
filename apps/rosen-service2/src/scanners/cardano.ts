@@ -18,9 +18,9 @@ import {
   KoiosTransaction,
 } from '@rosen-bridge/cardano-scanner';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
-import { TokenMapService } from 'services/tokenMap';
 
 import { configs } from '../configs';
+import { TokenMapService } from '../services/tokenMap';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
 

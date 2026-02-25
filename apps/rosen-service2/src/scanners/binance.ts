@@ -7,9 +7,9 @@ import { BinanceRpcObservationExtractor } from '@rosen-bridge/evm-observation-ex
 import { EvmRpcNetwork, EvmRpcScanner } from '@rosen-bridge/evm-scanner';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
 import { TransactionResponse } from 'ethers';
-import { TokenMapService } from 'services/tokenMap';
 
 import { configs } from '../configs';
+import { TokenMapService } from '../services/tokenMap';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
 

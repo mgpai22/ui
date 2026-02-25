@@ -17,7 +17,7 @@ dataAggregator:
   interval: 60
 tokenMap:
   onChainTokenMapEnabled: true
-  path: config/tokensMap.json
+  path: config/rosen
 chains:
   ergo:
     initialHeight: 1
@@ -58,5 +58,5 @@ chains:
     initialHeight: 1
     scanInterval: 10
 paths:
-  contracts: config/contracts.json
+  contracts: config/rosen
   healthReport: healthReport.json

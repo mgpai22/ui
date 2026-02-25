@@ -1,6 +1,7 @@
 import { CallbackType } from '@rosen-bridge/abstract-extractor';
 import { AbstractLogger, DummyLogger } from '@rosen-bridge/abstract-logger';
 import { ErgoUTXOExtractor } from '@rosen-bridge/address-extractor';
+import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import { ExtendedTokenMap, TokenMap } from '@rosen-bridge/extended-tokens';
 import { ErgoNetworkType } from '@rosen-bridge/scanner-interfaces';
 import {
@@ -9,13 +10,13 @@ import {
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { createClient, VercelKV } from '@vercel/kv';
-import { configs } from 'configs';
 import 'constants';
 import crypto from 'crypto';
 import * as ergoLib from 'ergo-lib-wasm-nodejs';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { configs } from '../configs';
 import {
   TOKEN_MAP_EXTRACTOR_LOGGER_NAME,
   TOKEN_MAP_EXTRACTOR_ID,
@@ -117,7 +118,9 @@ export class TokenMapService extends AbstractService {
       this.logger.child(TOKEN_MAP_EXTRACTOR_LOGGER_NAME),
     );
 
-    // await ScannerService.getInstance().getScanners().ergo!.registerExtractor(tokenMapBoxExtractor);
+    await (
+      ScannerService.getInstance().getScanners().ergo as ErgoScanner
+    ).registerExtractor(tokenMapBoxExtractor);
 
     this.tokenMap = new ExtendedTokenMap();
 
