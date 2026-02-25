@@ -62,13 +62,13 @@ export interface DataAggregator {
 }
 
 export interface Chains {
-  'ergo': ChainsErgo;
-  'cardano': ChainsCardano;
-  'bitcoin': ChainsBitcoin;
-  'bitcoin-runes': ChainsBitcoinRunes;
-  'doge': ChainsDoge;
-  'ethereum': ChainsEthereum;
-  'binance': ChainsBinance;
+  ergo: ChainsErgo;
+  cardano: ChainsCardano;
+  bitcoin: ChainsBitcoin;
+  "bitcoin-runes": ChainsBitcoinRunes;
+  doge: ChainsDoge;
+  ethereum: ChainsEthereum;
+  binance: ChainsBinance;
 }
 
 export interface ChainsBinance {
