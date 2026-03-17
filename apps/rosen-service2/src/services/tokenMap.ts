@@ -30,12 +30,20 @@ export class TokenMapService extends AbstractService {
   private tokenMap: TokenMap | ExtendedTokenMap;
   name = 'TokenMapService';
   private static instance: TokenMapService;
+  private ergoScanner: ErgoScanner;
   protected dependencies: Dependency[] = [
     {
       serviceName: ScannerService.getInstance().name,
-      allowedStatuses: [ServiceStatus.running],
+      allowedStatuses: [ServiceStatus.started],
     },
   ];
+  startService = async (): Promise<boolean> => {
+    return this.start();
+  };
+
+  stopService = (): Promise<boolean> => {
+    return this.stop();
+  };
 
   protected start = async (): Promise<boolean> => {
     try {
@@ -59,15 +67,22 @@ export class TokenMapService extends AbstractService {
     return true;
   };
 
-  constructor(logger: AbstractLogger = new DummyLogger()) {
+  constructor(
+    ergoScanner: ErgoScanner,
+    logger: AbstractLogger = new DummyLogger(),
+  ) {
     super(logger);
+    this.ergoScanner = ergoScanner;
   }
 
-  static init = async (logger?: AbstractLogger): Promise<void> => {
+  static init = async (
+    ergoScanner: ErgoScanner,
+    logger?: AbstractLogger,
+  ): Promise<void> => {
     if (this.instance != undefined) {
       return;
     }
-    this.instance = new TokenMapService(logger);
+    this.instance = new TokenMapService(ergoScanner, logger);
   };
 
   static getInstance = (): TokenMapService => {
@@ -87,7 +102,7 @@ export class TokenMapService extends AbstractService {
 
     this.tokenMap = new TokenMap();
     await this.tokenMap.updateConfigByJson(tokens.tokens);
-
+    console.log('hi');
     this.logger.info(`TokenMap loaded from ${tokensPath}`);
   }
 
@@ -118,9 +133,7 @@ export class TokenMapService extends AbstractService {
       this.logger.child(TOKEN_MAP_EXTRACTOR_LOGGER_NAME),
     );
 
-    await (
-      ScannerService.getInstance().getScanners().ergo as ErgoScanner
-    ).registerExtractor(tokenMapBoxExtractor);
+    await this.ergoScanner.registerExtractor(tokenMapBoxExtractor);
 
     this.tokenMap = new ExtendedTokenMap();
 
@@ -158,10 +171,10 @@ export class TokenMapService extends AbstractService {
     });
   };
 
-  getTokenMap(): TokenMap | ExtendedTokenMap {
+  getTokenMap = (): TokenMap | ExtendedTokenMap => {
     if (!this.tokenMap) {
       throw new Error('TokenMapService not initialized');
     }
     return this.tokenMap;
-  }
+  };
 }

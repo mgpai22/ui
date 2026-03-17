@@ -1,6 +1,7 @@
 import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import { WebSocketScanner } from '@rosen-bridge/abstract-scanner';
 import { CardanoOgmiosScanner } from '@rosen-bridge/cardano-scanner';
+import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import {
   PeriodicTaskService,
   Dependency,
@@ -30,6 +31,7 @@ import {
   buildCardanoBlockFrostScannerWithExtractors,
   buildCardanoOgmiosScannerWithExtractors,
 } from '../scanners';
+import { createErgoScanner } from '../scanners/ergo';
 import { ChainScannersType, ChainsKeys } from '../types';
 import { DBService } from './db';
 
@@ -79,6 +81,7 @@ export class ScannerService extends PeriodicTaskService {
   protected generateAndRegisterScannersWithExtractors = async () => {
     try {
       this.scanners[NETWORKS.ergo.key] = await initializeErgoScanner(
+        ScannerService.getInstance().getScanners().ergo as ErgoScanner,
         this.dbService.dataSource,
       );
 
@@ -156,6 +159,12 @@ export class ScannerService extends PeriodicTaskService {
     }
   };
 
+  protected generateErgoScanner = async () => {
+    this.scanners[NETWORKS.ergo.key] = await createErgoScanner(
+      this.dbService.dataSource,
+    );
+  };
+
   /**
    * initializes the singleton instance of ScannerService
    *
@@ -170,7 +179,7 @@ export class ScannerService extends PeriodicTaskService {
     }
     this.instance = new ScannerService(logger);
 
-    await this.instance.generateAndRegisterScannersWithExtractors();
+    await this.instance.generateErgoScanner();
   };
 
   /**
@@ -193,6 +202,7 @@ export class ScannerService extends PeriodicTaskService {
    * @returns void
    */
   protected preStart = async () => {
+    await this.generateAndRegisterScannersWithExtractors();
     for (const [, scanner] of Object.entries(this.scanners)) {
       if (scanner instanceof WebSocketScanner) {
         if (!scanner.getConnectionStatus()) {

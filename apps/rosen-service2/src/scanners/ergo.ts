@@ -50,17 +50,7 @@ const createEventTrigger = (
   );
 };
 
-/**
- * Initializes and configures an Ergo scanner instance.
- *
- * @param dataSource - TypeORM DataSource for DB connection
- * @returns Configured and ready-to-use ErgoScanner instance
- * @throws Error if observation extractor creation or registration fails
- */
-export const initializeErgoScanner = async (dataSource: DataSource) => {
-  logger.info('Starting Ergo scanner initialization...');
-
-  // Create Ergo scanner with Explorer/Node network settings
+export const createErgoScanner = (dataSource: DataSource): ErgoScanner => {
   const networkConnectorManager = new NetworkConnectorManager<Transaction>(
     new FailoverStrategy(),
     logger.child('ergoScannerLogger'),
@@ -76,21 +66,27 @@ export const initializeErgoScanner = async (dataSource: DataSource) => {
       networkConnectorManager.addConnector(new ErgoNodeNetwork(node.url!));
     });
   }
-  const ergoScanner = new ErgoScanner({
+  return new ErgoScanner({
     dataSource: dataSource,
     initialHeight: configs.chains.ergo.initialHeight,
     network: networkConnectorManager,
     blockRetrieveGap: configs.chains.ergo.blockRetrieveGap,
     logger: logger.child('ergoScannerLogger'),
   });
+};
 
-  const ergoObservationExtractor = new ErgoObservationExtractor(
-    configs.contracts.ergo.addresses.lock,
-    dataSource,
-    TokenMapService.getInstance().getTokenMap(),
-    logger.child('ergoObservationExtractor'),
-  );
-  await ergoScanner.registerExtractor(ergoObservationExtractor);
+/**
+ * Initializes and configures an Ergo scanner instance.
+ *
+ * @param dataSource - TypeORM DataSource for DB connection
+ * @returns Configured and ready-to-use ErgoScanner instance
+ * @throws Error if observation extractor creation or registration fails
+ */
+export const initializeErgoScanner = async (
+  ergoScanner: ErgoScanner,
+  dataSource: DataSource,
+) => {
+  logger.info('Starting Ergo scanner initialization...');
 
   let networkType: ErgoNetworkType;
   let url: string;
@@ -103,6 +99,13 @@ export const initializeErgoScanner = async (dataSource: DataSource) => {
   }
 
   try {
+    const ergoObservationExtractor = new ErgoObservationExtractor(
+      configs.contracts.ergo.addresses.lock,
+      dataSource,
+      TokenMapService.getInstance().getTokenMap(),
+      logger.child('ergoObservationExtractor'),
+    );
+    await ergoScanner.registerExtractor(ergoObservationExtractor);
     const ergoEventTriggerExtractor = createEventTrigger(
       NETWORKS.ergo.key,
       networkType,

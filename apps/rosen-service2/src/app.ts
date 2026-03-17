@@ -1,4 +1,5 @@
 import { DefaultLogger } from '@rosen-bridge/abstract-logger';
+import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import { ServiceManager } from '@rosen-bridge/service-manager';
 import { AssetAggregatorService } from 'services/assetAggregator';
 import { GeneralMetricsService } from 'services/generalMetrics';
@@ -23,19 +24,21 @@ const startApp = async () => {
     DefaultLogger.getInstance().child('serviceManager'),
   );
 
-  logger.debug('Initializing tokens config instance');
-  TokenMapService.init(DefaultLogger.getInstance().child('tokenMapConfig'));
-  serviceManager.register(TokenMapService.getInstance());
   logger.debug('Initializing database service');
   DBService.init(dataSource, DefaultLogger.getInstance().child('dbService'));
   serviceManager.register(DBService.getInstance());
   logger.debug('Database service registered to the service manager');
-
   logger.debug('Initializing scanner service');
   ScannerService.init(DefaultLogger.getInstance().child('ergoScannerService'));
   serviceManager.register(ScannerService.getInstance());
   logger.debug('Scanner service registered to the service manager');
-
+  TokenMapService.init(
+    ScannerService.getInstance().getScanners().ergo as ErgoScanner,
+    DefaultLogger.getInstance().child('tokenMapConfig'),
+  );
+  logger.debug('Initializing tokens config instance');
+  serviceManager.register(TokenMapService.getInstance());
+  serviceManager.start(TokenMapService.getInstance().getName());
   logger.debug('Initializing general metrics service');
   GeneralMetricsService.init(
     DefaultLogger.getInstance().child('generalMetricsService'),
