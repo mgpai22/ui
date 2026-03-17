@@ -310,6 +310,43 @@
       }
     }
   },
+  "statistics": {
+    "type": "object",
+    "children": {
+      "lockedAssetsMetrics": {
+        "type": "object",
+        "children": {
+          "interval": {
+            "type": "number",
+            "default": 86400,
+            "description": "locked assets metrics update interval threshold in seconds",
+            "validations": [
+              {
+                "required": true,
+                "error": "locked assets metrics update interval must be specified (in seconds)"
+              }
+            ]
+          }
+        }
+      },
+      "generalMetrics": {
+        "type": "object",
+        "children": {
+          "interval": {
+            "type": "number",
+            "default": 86400,
+            "description": "general metrics update interval threshold in seconds",
+            "validations": [
+              {
+                "required": true,
+                "error": "general metrics update interval must be specified (in seconds)"
+              }
+            ]
+          }
+        }
+      }
+  }
+},
   "chains": {
     "type": "object",
     "children": {
@@ -723,6 +760,14 @@
                 }
               },
               {
+                "required": true,
+                "error": "bitcoin network connection method must be set",
+                "when": {
+                  "path": "chains.bitcoin-runes.active",
+                  "value": true
+                }
+              },
+              {
                 "choices": [
                   "rpc",
                   "esplora"
@@ -874,7 +919,7 @@
           },
           "unisatApiKey": {
             "type": "string",
-             "description": "bitcoin runes ApiKey url",
+            "description": "bitcoin runes ApiKey url",
             "validations": [
               {
                 "required": true,

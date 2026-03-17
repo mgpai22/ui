@@ -71,17 +71,19 @@ export const buildBitcoinRpcScannerWithExtractors = async (
   try {
     const tokenMap = TokenMapService.getInstance().getTokenMap();
 
-    logger.debug('Creating Bitcoin observation extractor...');
-    const observationExtractor = new BitcoinRpcObservationExtractor(
-      configs.contracts.bitcoin.addresses.lock,
-      dataSource,
-      tokenMap,
-      logger.child('bitcoinRpcObservationExtractor'),
-    );
+    if (configs.chains.bitcoin.active) {
+      logger.debug('Creating Bitcoin observation extractor...');
+      const observationExtractor = new BitcoinRpcObservationExtractor(
+        configs.contracts.bitcoin.addresses.lock,
+        dataSource,
+        tokenMap,
+        logger.child('bitcoinRpcObservationExtractor'),
+      );
 
-    logger.debug('Registering observation extractor with scanner...');
-    await bitcoinScanner.registerExtractor(observationExtractor);
-    logger.info('Bitcoin observation extractor registered successfully');
+      logger.debug('Registering observation extractor with scanner...');
+      await bitcoinScanner.registerExtractor(observationExtractor);
+      logger.info('Bitcoin observation extractor registered successfully');
+    }
     if (configs.chains['bitcoin-runes'].active) {
       const runesClient: AbstractRunesProtocolNetwork =
         new UnisatRunesProtocolNetwork(
@@ -153,17 +155,19 @@ export const buildBitcoinEsploraScannerWithExtractors = async (
   try {
     const tokenMap = TokenMapService.getInstance().getTokenMap();
 
-    logger.debug('Creating Bitcoin observation extractor...');
-    const observationExtractor = new BitcoinEsploraObservationExtractor(
-      configs.contracts.bitcoin.addresses.lock,
-      dataSource,
-      tokenMap,
-      logger.child('bitcoinEsploraObservationExtractor'),
-    );
+    if (configs.chains.bitcoin.active) {
+      logger.debug('Creating Bitcoin observation extractor...');
+      const observationExtractor = new BitcoinEsploraObservationExtractor(
+        configs.contracts.bitcoin.addresses.lock,
+        dataSource,
+        tokenMap,
+        logger.child('bitcoinEsploraObservationExtractor'),
+      );
 
-    logger.debug('Registering observation extractor with scanner...');
-    await bitcoinScanner.registerExtractor(observationExtractor);
-    logger.info('Bitcoin observation extractor registered successfully');
+      logger.debug('Registering observation extractor with scanner...');
+      await bitcoinScanner.registerExtractor(observationExtractor);
+      logger.info('Bitcoin observation extractor registered successfully');
+    }
     if (configs.chains['bitcoin-runes'].active) {
       const runesClient: AbstractRunesProtocolNetwork =
         new UnisatRunesProtocolNetwork(
