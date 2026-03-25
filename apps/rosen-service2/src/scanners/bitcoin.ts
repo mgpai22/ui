@@ -70,7 +70,6 @@ export const buildBitcoinRpcScannerWithExtractors = async (
 
   try {
     const tokenMap = TokenMapService.getInstance().getTokenMap();
-
     if (configs.chains.bitcoin.active) {
       logger.debug('Creating Bitcoin observation extractor...');
       const observationExtractor = new BitcoinRpcObservationExtractor(
@@ -154,7 +153,6 @@ export const buildBitcoinEsploraScannerWithExtractors = async (
 
   try {
     const tokenMap = TokenMapService.getInstance().getTokenMap();
-
     if (configs.chains.bitcoin.active) {
       logger.debug('Creating Bitcoin observation extractor...');
       const observationExtractor = new BitcoinEsploraObservationExtractor(

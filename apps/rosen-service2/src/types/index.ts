@@ -1,3 +1,5 @@
+import { ErgoNetworkType } from '@rosen-bridge/scanner-interfaces';
+
 import { AllChainsConfigs } from './chains';
 import { RosenService2BaseConfig } from './configs';
 
@@ -12,4 +14,9 @@ export interface RosenService2Configs extends RosenService2BaseConfig {
 export interface TotalSupply {
   assetId: string;
   totalSupply: bigint;
+}
+
+export interface ErgoNetworkConfig {
+  networkType: ErgoNetworkType;
+  url: string;
 }

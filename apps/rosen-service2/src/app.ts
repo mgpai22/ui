@@ -1,7 +1,8 @@
 import { DefaultLogger } from '@rosen-bridge/abstract-logger';
-import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import { ServiceManager } from '@rosen-bridge/service-manager';
 import { AssetAggregatorService } from 'services/assetAggregator';
+import { ErgoExtractorService } from 'services/ergoExtractor';
+import { ErgoScannerService } from 'services/ergoScanner';
 import { GeneralMetricsService } from 'services/generalMetrics';
 import { LockedAssetsMetricService } from 'services/lockedAssetsMetric';
 import { TokenMapService } from 'services/tokenMap';
@@ -23,22 +24,35 @@ const startApp = async () => {
   const serviceManager = ServiceManager.setup(
     DefaultLogger.getInstance().child('serviceManager'),
   );
-
   logger.debug('Initializing database service');
   DBService.init(dataSource, DefaultLogger.getInstance().child('dbService'));
   serviceManager.register(DBService.getInstance());
   logger.debug('Database service registered to the service manager');
+  logger.debug('Initializing ergo scanner service');
+  ErgoScannerService.init(
+    dataSource,
+    DefaultLogger.getInstance().child('ErgoScannerService'),
+  );
+  serviceManager.register(ErgoScannerService.getInstance());
+  logger.debug('ergoScanner service registered to the service manager');
+  logger.debug('Initializing tokenMap scanner service');
+  TokenMapService.init(
+    ErgoScannerService.getInstance().getErgoScanner(),
+    DefaultLogger.getInstance().child('TokenMapService'),
+  );
+  serviceManager.register(TokenMapService.getInstance());
+  logger.debug('tokenMap service registered to the service manager');
+  logger.debug('Initializing ergo extractor scanner service');
+  ErgoExtractorService.init(
+    ErgoScannerService.getInstance().getErgoScanner(),
+    DefaultLogger.getInstance().child('ErgoExtractorService'),
+  );
+  serviceManager.register(ErgoExtractorService.getInstance());
+  logger.debug('ergoExtractor service registered to the service manager');
   logger.debug('Initializing scanner service');
   ScannerService.init(DefaultLogger.getInstance().child('ergoScannerService'));
   serviceManager.register(ScannerService.getInstance());
   logger.debug('Scanner service registered to the service manager');
-  TokenMapService.init(
-    ScannerService.getInstance().getScanners().ergo as ErgoScanner,
-    DefaultLogger.getInstance().child('tokenMapConfig'),
-  );
-  logger.debug('Initializing tokens config instance');
-  serviceManager.register(TokenMapService.getInstance());
-  serviceManager.start(TokenMapService.getInstance().getName());
   logger.debug('Initializing general metrics service');
   GeneralMetricsService.init(
     DefaultLogger.getInstance().child('generalMetricsService'),

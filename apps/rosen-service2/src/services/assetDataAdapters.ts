@@ -193,7 +193,6 @@ export class AssetDataAdapterService extends PeriodicTaskService {
       this.adapters[NETWORKS.ergo.key] = this.createChainSpecificDataAdapter(
         NETWORKS.ergo.key,
       );
-      configs.chains.cardano.koios.connections.at(0);
 
       if (
         configs.chains.cardano.active &&

@@ -3,7 +3,6 @@ import { AbstractLogger, DummyLogger } from '@rosen-bridge/abstract-logger';
 import { ErgoUTXOExtractor } from '@rosen-bridge/address-extractor';
 import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import { ExtendedTokenMap, TokenMap } from '@rosen-bridge/extended-tokens';
-import { ErgoNetworkType } from '@rosen-bridge/scanner-interfaces';
 import {
   AbstractService,
   Dependency,
@@ -20,54 +19,24 @@ import { configs } from '../configs';
 import {
   TOKEN_MAP_EXTRACTOR_LOGGER_NAME,
   TOKEN_MAP_EXTRACTOR_ID,
-  ERGO_METHOD_EXPLORER,
   TOKEN_MAP_REDIS_KEY,
 } from '../constants';
+import { resolveErgoNetworkConfig } from '../utils';
 import { DBService } from './db';
-import { ScannerService } from './scanner';
 
 export class TokenMapService extends AbstractService {
-  private tokenMap: TokenMap | ExtendedTokenMap;
   name = 'TokenMapService';
   private static instance: TokenMapService;
   private ergoScanner: ErgoScanner;
-  protected dependencies: Dependency[] = [
-    {
-      serviceName: ScannerService.getInstance().name,
-      allowedStatuses: [ServiceStatus.started],
-    },
-  ];
-  startService = async (): Promise<boolean> => {
-    return this.start();
-  };
+  private tokenMap: TokenMap;
+  protected dependencies: Dependency[] = [];
 
-  stopService = (): Promise<boolean> => {
-    return this.stop();
-  };
-
-  protected start = async (): Promise<boolean> => {
-    try {
-      if (!configs.tokenMap.onChainTokenMapEnabled) {
-        await this.loadFromFile();
-      } else {
-        await this.initOnChain();
-      }
-      this.setStatus(ServiceStatus.running);
-      return true;
-    } catch (e) {
-      this.logger.error(
-        `Something went wrong while starting the TokenMapService: ${e}`,
-      );
-      return false;
-    }
-  };
-
-  protected stop = async (): Promise<boolean> => {
-    this.setStatus(ServiceStatus.dormant);
-    return true;
-  };
-
-  constructor(
+  /**
+   * constructor for tokenMap service
+   * @param {ErgoScanner} ergoScanner Scanner instance to register extractors.
+   * @param {AbstractLogger} logger.
+   */
+  private constructor(
     ergoScanner: ErgoScanner,
     logger: AbstractLogger = new DummyLogger(),
   ) {
@@ -75,16 +44,25 @@ export class TokenMapService extends AbstractService {
     this.ergoScanner = ergoScanner;
   }
 
-  static init = async (
-    ergoScanner: ErgoScanner,
-    logger?: AbstractLogger,
-  ): Promise<void> => {
+  /**
+   * initializes the singleton instance of DBService
+   *
+   * @static
+   * @param {ErgoScanner} ergoScanner
+   * @param {AbstractLogger} [logger]
+   * @memberof TokenMapService
+   */
+  static init = (ergoScanner: ErgoScanner, logger?: AbstractLogger) => {
     if (this.instance != undefined) {
       return;
     }
     this.instance = new TokenMapService(ergoScanner, logger);
   };
 
+  /**
+   * Returns the singleton instance of service.
+   * @returns {TokenMapService} The initialized service instance.
+   */
   static getInstance = (): TokenMapService => {
     if (!this.instance) {
       throw new Error(`${this.name} instances is not initialized yet`);
@@ -92,6 +70,41 @@ export class TokenMapService extends AbstractService {
     return this.instance;
   };
 
+  /**
+   * Loads token map from file or initializes on-chain token map depending on config.
+   * @returns {Promise<boolean>} True if the service started successfully, false otherwise.
+   */
+  protected start = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.started);
+    try {
+      if (!configs.tokenMap.onChainTokenMapEnabled) {
+        await this.loadFromFile();
+      } else {
+        await this.initOnChain();
+      }
+      this.setStatus(ServiceStatus.running);
+    } catch (e) {
+      this.logger.error(
+        `Something went wrong while starting the DBService: ${e}`,
+      );
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * Stops the service and sets it to dormant.
+   * @returns {Promise<boolean>} True if the service stopped successfully.
+   */
+  protected stop = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    return true;
+  };
+
+  /**
+   * Loads token map from a local JSON file.
+   * @throws {Error} If the token map file does not exist.
+   */
   private async loadFromFile() {
     const tokensPath = path.resolve(configs.tokenMap.path!);
     if (!fs.existsSync(tokensPath)) {
@@ -102,10 +115,12 @@ export class TokenMapService extends AbstractService {
 
     this.tokenMap = new TokenMap();
     await this.tokenMap.updateConfigByJson(tokens.tokens);
-    console.log('hi');
-    this.logger.info(`TokenMap loaded from ${tokensPath}`);
+    this.logger.debug(`TokenMap loaded from ${tokensPath}`);
   }
 
+  /**
+   * Initializes the token map from on-chain data.
+   */
   private async initOnChain() {
     if (
       !configs.contracts.ergo.addresses.tokenMap ||
@@ -113,15 +128,7 @@ export class TokenMapService extends AbstractService {
     ) {
       throw new Error('On-chain token map address or token not defined');
     }
-    let networkType: ErgoNetworkType;
-    let url: string;
-    if (configs.chains.ergo.method == ERGO_METHOD_EXPLORER) {
-      networkType = ErgoNetworkType.Explorer;
-      url = configs.chains.ergo.explorer.connections[0].url!;
-    } else {
-      networkType = ErgoNetworkType.Node;
-      url = configs.chains.ergo.node.connections[0].url!;
-    }
+    const { networkType, url } = resolveErgoNetworkConfig();
     const tokenMapBoxExtractor = new ErgoUTXOExtractor(
       DBService.getInstance().dataSource,
       TOKEN_MAP_EXTRACTOR_ID,
@@ -155,6 +162,11 @@ export class TokenMapService extends AbstractService {
     this.logger.info('On-chain TokenMap initialized and extractor registered');
   }
 
+  /**
+   * Updates the token map from DBService data and stores it in Redis.
+   * @param {ExtendedTokenMap} tokenMap Token map instance to update.
+   * @param {VercelKV} redis Redis client to store updated token map.
+   */
   private updateTokenMap = async (
     tokenMap: ExtendedTokenMap,
     redis: VercelKV,
@@ -171,10 +183,7 @@ export class TokenMapService extends AbstractService {
     });
   };
 
-  getTokenMap = (): TokenMap | ExtendedTokenMap => {
-    if (!this.tokenMap) {
-      throw new Error('TokenMapService not initialized');
-    }
+  getTokenMap = (): TokenMap => {
     return this.tokenMap;
   };
 }

@@ -130,7 +130,7 @@ export class HealthService extends PeriodicTaskService {
         chain,
         async () =>
           this.dbService.getLastSavedBlock(
-            this.scannerService.getScanners()[chain]!.name(),
+            this.scannerService.getScanner(chain)!.name(),
           ),
         configs.healthCheck.scanner.warnDiff,
         configs.healthCheck.scanner.criticalDiff,

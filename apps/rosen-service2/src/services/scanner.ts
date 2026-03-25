@@ -1,7 +1,6 @@
 import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import { WebSocketScanner } from '@rosen-bridge/abstract-scanner';
 import { CardanoOgmiosScanner } from '@rosen-bridge/cardano-scanner';
-import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import {
   PeriodicTaskService,
   Dependency,
@@ -19,7 +18,6 @@ import {
   DOGE_METHOD_RPC,
 } from '../constants';
 import { CARDANO_METHOD_OGMIOS } from '../constants';
-import { initializeErgoScanner } from '../scanners';
 import {
   buildCardanoKoiosScannerWithExtractors,
   buildBitcoinRpcScannerWithExtractors,
@@ -31,9 +29,10 @@ import {
   buildCardanoBlockFrostScannerWithExtractors,
   buildCardanoOgmiosScannerWithExtractors,
 } from '../scanners';
-import { createErgoScanner } from '../scanners/ergo';
 import { ChainScannersType, ChainsKeys } from '../types';
 import { DBService } from './db';
+import { ErgoScannerService } from './ergoScanner';
+import { TokenMapService } from './tokenMap';
 
 export class ScannerService extends PeriodicTaskService {
   name = 'ScannerService';
@@ -45,6 +44,14 @@ export class ScannerService extends PeriodicTaskService {
       serviceName: DBService.name,
       allowedStatuses: [ServiceStatus.running],
     },
+    {
+      serviceName: ErgoScannerService.name,
+      allowedStatuses: [ServiceStatus.running],
+    },
+    {
+      serviceName: TokenMapService.name,
+      allowedStatuses: [ServiceStatus.running],
+    },
   ];
 
   private constructor(logger?: AbstractLogger) {
@@ -53,18 +60,21 @@ export class ScannerService extends PeriodicTaskService {
   }
 
   /**
-   * return scanners
+   * Returns scanner instance for the given chain.
    *
-   * @returns { { [k1 in ChainsKeys]?: ExtraChainScannersType } } scanners
+   * @param {ChainsKeys} chain - Target chain key
+   * @returns {ExtraChainScannersType | undefined} Scanner instance for the chain
    */
-  public getScanners = () => this.scanners;
+  public getScanner = (chain: ChainsKeys) => {
+    this.scanners.ergo = ErgoScannerService.getInstance().getErgoScanner();
+    return this.scanners[chain];
+  };
 
   /**
    * Generates and registers blockchain scanners along with their corresponding event extractors
    * based on the active chains and configured methods.
    *
    * Supported chains:
-   * - Ergo     (Explorer, Node)
    * - Cardano  (Blockfrost, Ogmios, Koios)
    * - Bitcoin  (Esplora, RPC)
    * - Doge     (Esplora, RPC)
@@ -80,11 +90,6 @@ export class ScannerService extends PeriodicTaskService {
    */
   protected generateAndRegisterScannersWithExtractors = async () => {
     try {
-      this.scanners[NETWORKS.ergo.key] = await initializeErgoScanner(
-        ScannerService.getInstance().getScanners().ergo as ErgoScanner,
-        this.dbService.dataSource,
-      );
-
       if (configs.chains.cardano.active) {
         switch (configs.chains.cardano.method) {
           case CARDANO_METHOD_BLOCKFROST:
@@ -159,12 +164,6 @@ export class ScannerService extends PeriodicTaskService {
     }
   };
 
-  protected generateErgoScanner = async () => {
-    this.scanners[NETWORKS.ergo.key] = await createErgoScanner(
-      this.dbService.dataSource,
-    );
-  };
-
   /**
    * initializes the singleton instance of ScannerService
    *
@@ -178,8 +177,6 @@ export class ScannerService extends PeriodicTaskService {
       return;
     }
     this.instance = new ScannerService(logger);
-
-    await this.instance.generateErgoScanner();
   };
 
   /**

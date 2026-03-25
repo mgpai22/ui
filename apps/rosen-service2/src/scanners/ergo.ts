@@ -1,22 +1,9 @@
 import { DefaultLogger } from '@rosen-bridge/abstract-logger';
-import {
-  FailoverStrategy,
-  NetworkConnectorManager,
-} from '@rosen-bridge/abstract-scanner';
-import { ErgoObservationExtractor } from '@rosen-bridge/ergo-observation-extractor';
-import {
-  ErgoExplorerNetwork,
-  ErgoNodeNetwork,
-  ErgoScanner,
-} from '@rosen-bridge/ergo-scanner';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
-import { ErgoNetworkType, Transaction } from '@rosen-bridge/scanner-interfaces';
+import { ErgoNetworkType } from '@rosen-bridge/scanner-interfaces';
 import { EventTriggerExtractor } from '@rosen-bridge/watcher-data-extractor';
-import { NETWORKS } from '@rosen-ui/constants';
+import { formatChainName } from 'utils';
 
-import { configs } from '../configs';
-import { ERGO_METHOD_EXPLORER } from '../constants';
-import { TokenMapService } from '../services/tokenMap';
 import { ChainConfigs } from '../types';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
@@ -30,7 +17,7 @@ const logger = DefaultLogger.getInstance().child(import.meta.url);
  * @param chianConfigs
  * @returns EventTriggerExtractor
  */
-const createEventTrigger = (
+export const createEventTrigger = (
   chain: string,
   networkType: ErgoNetworkType,
   url: string,
@@ -46,140 +33,6 @@ const createEventTrigger = (
     chianConfigs.tokens.RWTId,
     chianConfigs.addresses.WatcherPermit,
     chianConfigs.addresses.Fraud,
-    logger.child(`${chain}EventTriggerExtractor`),
+    logger.child(`${formatChainName(chain, 'pascal')}EventTriggerExtractor`),
   );
-};
-
-export const createErgoScanner = (dataSource: DataSource): ErgoScanner => {
-  const networkConnectorManager = new NetworkConnectorManager<Transaction>(
-    new FailoverStrategy(),
-    logger.child('ergoScannerLogger'),
-  );
-  if (configs.chains.ergo.method == ERGO_METHOD_EXPLORER) {
-    configs.chains.ergo.explorer.connections.forEach((explorer) => {
-      networkConnectorManager.addConnector(
-        new ErgoExplorerNetwork(explorer.url!),
-      );
-    });
-  } else {
-    configs.chains.ergo.node.connections.forEach((node) => {
-      networkConnectorManager.addConnector(new ErgoNodeNetwork(node.url!));
-    });
-  }
-  return new ErgoScanner({
-    dataSource: dataSource,
-    initialHeight: configs.chains.ergo.initialHeight,
-    network: networkConnectorManager,
-    blockRetrieveGap: configs.chains.ergo.blockRetrieveGap,
-    logger: logger.child('ergoScannerLogger'),
-  });
-};
-
-/**
- * Initializes and configures an Ergo scanner instance.
- *
- * @param dataSource - TypeORM DataSource for DB connection
- * @returns Configured and ready-to-use ErgoScanner instance
- * @throws Error if observation extractor creation or registration fails
- */
-export const initializeErgoScanner = async (
-  ergoScanner: ErgoScanner,
-  dataSource: DataSource,
-) => {
-  logger.info('Starting Ergo scanner initialization...');
-
-  let networkType: ErgoNetworkType;
-  let url: string;
-  if (configs.chains.ergo.method == ERGO_METHOD_EXPLORER) {
-    networkType = ErgoNetworkType.Explorer;
-    url = configs.chains.ergo.explorer.connections[0].url!;
-  } else {
-    networkType = ErgoNetworkType.Node;
-    url = configs.chains.ergo.node.connections[0].url!;
-  }
-
-  try {
-    const ergoObservationExtractor = new ErgoObservationExtractor(
-      configs.contracts.ergo.addresses.lock,
-      dataSource,
-      TokenMapService.getInstance().getTokenMap(),
-      logger.child('ergoObservationExtractor'),
-    );
-    await ergoScanner.registerExtractor(ergoObservationExtractor);
-    const ergoEventTriggerExtractor = createEventTrigger(
-      NETWORKS.ergo.key,
-      networkType,
-      url,
-      dataSource,
-      configs.contracts.ergo,
-    );
-    await ergoScanner.registerExtractor(ergoEventTriggerExtractor);
-    if (configs.chains.cardano.active)
-      await ergoScanner.registerExtractor(
-        createEventTrigger(
-          NETWORKS.cardano.key,
-          networkType,
-          url,
-          dataSource,
-          configs.contracts.cardano,
-        ),
-      );
-    if (configs.chains.bitcoin.active)
-      await ergoScanner.registerExtractor(
-        createEventTrigger(
-          NETWORKS.binance.key,
-          networkType,
-          url,
-          dataSource,
-          configs.contracts.bitcoin,
-        ),
-      );
-    if (configs.chains.doge.active)
-      await ergoScanner.registerExtractor(
-        createEventTrigger(
-          NETWORKS.doge.key,
-          networkType,
-          url,
-          dataSource,
-          configs.contracts.doge,
-        ),
-      );
-    if (configs.chains.ethereum.active)
-      await ergoScanner.registerExtractor(
-        createEventTrigger(
-          NETWORKS.ethereum.key,
-          networkType,
-          url,
-          dataSource,
-          configs.contracts.ethereum,
-        ),
-      );
-    if (configs.chains['bitcoin-runes'].active)
-      await ergoScanner.registerExtractor(
-        createEventTrigger(
-          NETWORKS['bitcoin-runes'].key,
-          networkType,
-          url,
-          dataSource,
-          configs.contracts['bitcoin-runes'],
-        ),
-      );
-    if (configs.chains.binance.active)
-      await ergoScanner.registerExtractor(
-        createEventTrigger(
-          NETWORKS.binance.key,
-          networkType,
-          url,
-          dataSource,
-          configs.contracts.binance,
-        ),
-      );
-  } catch (error) {
-    throw new Error(
-      `cannot create or register event trigger extractors due to error: ${error}`,
-    );
-  }
-
-  logger.info('Ergo scanner initialization completed successfully');
-  return ergoScanner;
 };
