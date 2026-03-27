@@ -45,7 +45,7 @@ export class TokenMapService extends AbstractService {
   }
 
   /**
-   * initializes the singleton instance of DBService
+   * initializes the singleton instance of TokenMapService
    *
    * @static
    * @param {ErgoScanner} ergoScanner
@@ -71,7 +71,7 @@ export class TokenMapService extends AbstractService {
   };
 
   /**
-   * Loads token map from file or initializes on-chain token map depending on config.
+   * Start service by loading token map from file or initializes on-chain token map depending on config.
    * @returns {Promise<boolean>} True if the service started successfully, false otherwise.
    */
   protected start = async (): Promise<boolean> => {

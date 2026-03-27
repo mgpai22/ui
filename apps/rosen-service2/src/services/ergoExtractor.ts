@@ -149,6 +149,14 @@ export class ErgoExtractorService extends AbstractService {
     this.ergoScanner = ergoScanner;
   }
 
+  /**
+   * initializes the singleton instance of ErgoExtractorService
+   *
+   * @static
+   * @param {ErgoScanner} ergoScanner
+   * @param {AbstractLogger} [logger]
+   * @memberof ErgoExtractorService
+   */
   static init = async (
     ergoScanner: ErgoScanner,
     logger?: AbstractLogger,

@@ -17,7 +17,7 @@ dataAggregator:
   interval: 60
 tokenMap:
   onChainTokenMapEnabled: true
-  path: config/rosen
+  path: config/tokenMap.json
 statistics:
   lockedAssetsMetrics:
     interval: 86400
@@ -63,5 +63,5 @@ chains:
     initialHeight: 1
     scanInterval: 10
 paths:
-  contracts: config/rosen
+  contracts: config/contracts.json
   healthReport: healthReport.json
