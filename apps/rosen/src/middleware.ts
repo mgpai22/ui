@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 
+import * as Sentry from '@sentry/nextjs';
 import { Ratelimit } from '@upstash/ratelimit';
 import { ipAddress } from '@vercel/functions';
 import { kv } from '@vercel/kv';
@@ -40,20 +41,38 @@ const getCORSHeaders = (origin: string) => {
 };
 
 export async function middleware(request: NextRequest) {
-  const ip = ipAddress(request) ?? '127.0.0.1';
+  try {
+    const err = true;
 
-  const success = (await rateLimit?.limit(ip))?.success ?? true;
+    const ip = ipAddress(request) ?? '127.0.0.1';
 
-  if (!success) {
-    return Response.json('Too many requests', { status: 429 });
+    const success = (await rateLimit?.limit(ip))?.success ?? true;
+
+    if (!success) {
+      return Response.json('Too many requests', { status: 429 });
+    }
+
+    const origin = request.headers.get('Origin');
+    if (request.url.includes('/api') && origin && isOriginAllowed(origin)) {
+      return NextResponse.next({ headers: getCORSHeaders(origin) });
+    }
+    if (err) throw new Error('Erorr testtttttttttttttttt 😀🙂😘');
+
+    return NextResponse.next();
+  } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setTag('layer', 'middleware');
+
+      scope.setContext('request', {
+        path: request.nextUrl.pathname,
+        method: request.method,
+      });
+
+      Sentry.captureException(error);
+    });
+
+    NextResponse.json('Internal error', { status: 500 });
   }
-
-  const origin = request.headers.get('Origin');
-  if (request.url.includes('/api') && origin && isOriginAllowed(origin)) {
-    return NextResponse.next({ headers: getCORSHeaders(origin) });
-  }
-
-  return NextResponse.next();
 }
 
 export const config = {

@@ -1,7 +1,8 @@
 /* eslint-disable */
 import { NextRequest } from 'next/server';
 
-import { ValidationResult } from 'joi';
+import * as Sentry from '@sentry/nextjs';
+import { ValidationError, ValidationResult } from 'joi';
 
 export class AccessDeniedError extends Error {
   constructor(message: string) {
@@ -53,15 +54,42 @@ export const withValidation =
       const response = await handler(value);
       return Response.json(response);
     } catch (error) {
+      const isExpectedError =
+        error instanceof AccessDeniedError || error instanceof ValidationError;
+
+      /**
+       * Capture unexpected API errors with request and input context
+       * to make debugging production issues easier.
+       */
+      if (!isExpectedError) {
+        Sentry.withScope((scope) => {
+          scope.setTag('layer', 'api-route');
+
+          scope.setContext('request', {
+            url: request.url,
+            method: request.method,
+          });
+
+          scope.setContext('validation', {
+            value,
+          });
+
+          Sentry.captureException(error);
+        });
+      }
+
       if (error instanceof ReferenceError) {
         return Response.json(error.message, { status: 404 });
       }
+
       if (error instanceof AccessDeniedError) {
         return Response.json({ error: error.message }, { status: 403 });
       }
+
       if (error instanceof Error) {
         return Response.json(error.message, { status: 500 });
       }
+
       return Response.json(JSON.stringify(error), { status: 500 });
     }
   };

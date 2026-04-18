@@ -1,25 +1,36 @@
 import { InsufficientAssetsError } from '@rosen-network/base/dist/handleUncoveredAssets';
-import { serializeError } from 'serialize-error';
+import * as Sentry from '@sentry/nextjs';
 
-import { createSafeAction } from './safeServerAction';
+import { createSafeAction } from '@/safeServerAction/safeServerAction';
 
 export const { wrap, unwrap, unwrapFromObject } = createSafeAction({
   errors: {
     InsufficientAssetsError,
   },
+
   async onError(error, traceKey, args) {
-    try {
-      if (typeof window !== 'undefined') return;
+    if (typeof window !== 'undefined') return;
 
-      if (error instanceof InsufficientAssetsError) return;
+    if (error instanceof InsufficientAssetsError) return;
 
-      const { logger } = await import('@/actions');
+    /**
+     * Handle server-side action errors: ignore known business errors,
+     * enrich unexpected ones with action metadata (trace key, args),
+     * and report them to Sentry for debugging.
+     */
+    Sentry.withScope((scope) => {
+      scope.setTag('layer', 'server-action');
 
-      await logger(traceKey, args, serializeError(error));
+      scope.setTag('action', traceKey);
 
-      console.log('Sent log to Discord successfully');
-    } catch (error) {
-      console.log('Failed to send log to Discord', error);
-    }
+      scope.setContext('safeAction', {
+        traceKey,
+        args: args,
+      });
+
+      scope.setLevel('error');
+
+      Sentry.captureException(error);
+    });
   },
 });

@@ -9,9 +9,8 @@ import {
   UserDeniedTransactionSignatureError,
   WalletTransferParams,
 } from '@rosen-ui/wallet-api';
+import * as Sentry from '@sentry/nextjs';
 import { serializeError } from 'serialize-error';
-
-import { logger } from '@/actions';
 
 import { useNetwork } from './useNetwork';
 import { useTokenMap } from './useTokenMap';
@@ -115,15 +114,25 @@ export const useTransaction = () => {
 
       if (error instanceof UserDeniedTransactionSignatureError) return;
 
-      logger(
-        `${selectedWallet.name}:transfer`,
-        parameters,
-        serializeError(error),
-      )
-        .then(() => {})
-        .catch((error) => {
-          console.log('Failed to send log to Discord', error);
+      /**
+       * Attach transaction-related tags and context (wallet, chains, token, amount)
+       * and set error severity before sending the exception to Sentry.
+       */
+      Sentry.withScope((scope) => {
+        scope.setTag('feature', 'transaction');
+        scope.setTag('wallet', selectedWallet.name);
+
+        scope.setContext('transaction', {
+          fromChain: sourceValue,
+          toChain: targetValue,
+          token: tokenValue.tokenId,
+          amount: amountValue,
         });
+
+        scope.setLevel('error');
+
+        Sentry.captureException(error);
+      });
     } finally {
       setIsSubmitting(false);
     }
