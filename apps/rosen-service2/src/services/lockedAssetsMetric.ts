@@ -2,33 +2,41 @@ import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import {
   Dependency,
   PeriodicTaskService,
+  ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { lockedAssetsMetric } from '@rosen-ui/rosen-statistics';
 
 import { configs } from '../configs';
+import { AbstractDBService } from './abstrctDb';
 import { AssetAggregatorService } from './assetAggregator';
-import { DBService } from './db';
 
 export class LockedAssetsMetricService extends PeriodicTaskService {
   name = 'LockedAssetsMetricService';
   private static instance: LockedAssetsMetricService;
-  readonly dbService: DBService;
+  readonly dbService: AbstractDBService;
   protected dependencies: Dependency[] = [
     {
-      serviceName: DBService.name,
+      serviceName: AbstractDBService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
     {
       serviceName: AssetAggregatorService.name,
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
   ];
 
   private constructor(logger?: AbstractLogger) {
     super(logger);
-    this.dbService = DBService.getInstance();
+    this.dbService = AbstractDBService.getInstance();
   }
+
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    return true;
+  };
 
   /**
    * Initializes the singleton instance of locked assets metric service
@@ -67,7 +75,7 @@ export class LockedAssetsMetricService extends PeriodicTaskService {
   private lockedAssetsCalculation = async (): Promise<void> => {
     try {
       await lockedAssetsMetric(
-        this.dbService.dataSource,
+        this.dbService.getDataSource(),
         this.logger.child('lockedAssetsMetric'),
       );
 

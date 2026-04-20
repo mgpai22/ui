@@ -2,6 +2,7 @@ import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import {
   Dependency,
   PeriodicTaskService,
+  ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import ergoExplorerClientFactory from '@rosen-clients/ergo-explorer';
@@ -23,30 +24,35 @@ import { configs } from '../configs';
 import { TOTAL_SUPPLY_REDIS_KEY } from '../constants';
 import { ChainChoices, Chains, TotalSupply } from '../types';
 import { stringSerializer } from '../utils';
-import { DBService } from './db';
+import { AbstractTokenMapService } from './abstractTokenMapService';
+import { AbstractDBService } from './abstrctDb';
 import { TokenMapService } from './tokenMap';
 
 export class AssetDataAdapterService extends PeriodicTaskService {
   name = 'AssetDataAdapterService';
   private static instance: AssetDataAdapterService;
-  readonly dbService: DBService;
   readonly redis;
   protected adapters: { [key: string]: ChainsAdapters } = {};
   protected explorerApi;
   protected dependencies: Dependency[] = [
     {
-      serviceName: DBService.name,
+      serviceName: AbstractDBService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
     {
-      serviceName: TokenMapService.name,
+      serviceName: AbstractTokenMapService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
   ];
 
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    return true;
+  };
   private constructor(logger?: AbstractLogger) {
     super(logger);
-    this.dbService = DBService.getInstance();
     this.redis = createClient({
       url: configs.redis.address,
       token: configs.redis.token,

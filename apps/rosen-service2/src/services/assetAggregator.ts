@@ -2,6 +2,7 @@ import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import {
   Dependency,
   PeriodicTaskService,
+  ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { AssetAggregator, NetworkItem } from '@rosen-ui/asset-aggregator';
@@ -27,23 +28,29 @@ export class AssetAggregatorService extends PeriodicTaskService {
     {
       serviceName: AssetDataAdapterService.name,
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
     {
       serviceName: TokenMapService.name,
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
   ];
 
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    return true;
+  };
+
   private constructor(logger?: AbstractLogger) {
     super(logger);
-    this.dbService = DBService.getInstance();
     this.redis = createClient({
       url: configs.redis.address,
       token: configs.redis.token,
     });
     this.assetAggregator = new AssetAggregator(
       TokenMapService.getInstance().getTokenMap(),
-      this.dbService.dataSource,
+      DBService.getInstance().getDataSource(),
       this.logger,
     );
   }

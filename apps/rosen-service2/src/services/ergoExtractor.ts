@@ -2,8 +2,8 @@ import { AbstractLogger, DummyLogger } from '@rosen-bridge/abstract-logger';
 import { ErgoObservationExtractor } from '@rosen-bridge/ergo-observation-extractor';
 import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import {
-  AbstractService,
   Dependency,
+  ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { NETWORKS } from '@rosen-ui/constants';
@@ -12,23 +12,38 @@ import { createEventTrigger } from 'scanners/ergo';
 import { resolveErgoNetworkConfig } from 'utils';
 
 import { configs } from '../configs';
-import { DBService } from './db';
-import { TokenMapService } from './tokenMap';
+import { AbstractErgoExtractorsService } from './abstractErgoExtractor';
+import { AbstractErgoScannerService } from './abstractErgoScanner';
+import { AbstractTokenMapService } from './abstractTokenMapService';
+import { AbstractDBService } from './abstrctDb';
 
-export class ErgoExtractorService extends AbstractService {
+export class ErgoExtractorService extends AbstractErgoExtractorsService {
   private ergoScanner: ErgoScanner;
   name = 'ErgoExtractorService';
-  private static instance: ErgoExtractorService;
   protected dependencies: Dependency[] = [
     {
-      serviceName: DBService.getInstance().name,
+      serviceName: AbstractDBService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
     {
-      serviceName: TokenMapService.getInstance().name,
+      serviceName: AbstractTokenMapService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.assemble,
+    },
+    {
+      serviceName: AbstractErgoScannerService.getInstance().getName(),
+      allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.assemble,
     },
   ];
+
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    this.ergoScanner =
+      AbstractErgoScannerService.getInstance().getErgoScanner();
+    return true;
+  };
 
   /**
    * Stops the service by removing all registered extractors from the ErgoScanner.
@@ -53,8 +68,8 @@ export class ErgoExtractorService extends AbstractService {
     try {
       const ergoObservationExtractor = new ErgoObservationExtractor(
         configs.contracts.ergo.addresses.lock,
-        DBService.getInstance().dataSource,
-        TokenMapService.getInstance().getTokenMap(),
+        AbstractDBService.getInstance().getDataSource(),
+        AbstractTokenMapService.getInstance().getTokenMap(),
         this.logger.child('ergoObservationExtractor'),
       );
       await this.ergoScanner.registerExtractor(ergoObservationExtractor);
@@ -62,7 +77,7 @@ export class ErgoExtractorService extends AbstractService {
         NETWORKS.ergo.key,
         networkType,
         url,
-        DBService.getInstance().dataSource,
+        AbstractDBService.getInstance().getDataSource(),
         configs.contracts.ergo,
       );
       await this.ergoScanner.registerExtractor(ergoEventTriggerExtractor);
@@ -72,7 +87,7 @@ export class ErgoExtractorService extends AbstractService {
             NETWORKS.cardano.key,
             networkType,
             url,
-            DBService.getInstance().dataSource,
+            AbstractDBService.getInstance().getDataSource(),
             configs.contracts.cardano,
           ),
         );
@@ -82,7 +97,7 @@ export class ErgoExtractorService extends AbstractService {
             NETWORKS.binance.key,
             networkType,
             url,
-            DBService.getInstance().dataSource,
+            AbstractDBService.getInstance().getDataSource(),
             configs.contracts.bitcoin,
           ),
         );
@@ -92,7 +107,7 @@ export class ErgoExtractorService extends AbstractService {
             NETWORKS.doge.key,
             networkType,
             url,
-            DBService.getInstance().dataSource,
+            AbstractDBService.getInstance().getDataSource(),
             configs.contracts.doge,
           ),
         );
@@ -102,7 +117,7 @@ export class ErgoExtractorService extends AbstractService {
             NETWORKS.ethereum.key,
             networkType,
             url,
-            DBService.getInstance().dataSource,
+            AbstractDBService.getInstance().getDataSource(),
             configs.contracts.ethereum,
           ),
         );
@@ -112,7 +127,7 @@ export class ErgoExtractorService extends AbstractService {
             NETWORKS['bitcoin-runes'].key,
             networkType,
             url,
-            DBService.getInstance().dataSource,
+            AbstractDBService.getInstance().getDataSource(),
             configs.contracts['bitcoin-runes'],
           ),
         );
@@ -122,7 +137,7 @@ export class ErgoExtractorService extends AbstractService {
             NETWORKS.binance.key,
             networkType,
             url,
-            DBService.getInstance().dataSource,
+            AbstractDBService.getInstance().getDataSource(),
             configs.contracts.binance,
           ),
         );
@@ -141,12 +156,8 @@ export class ErgoExtractorService extends AbstractService {
    * @param {ErgoScanner} ergoScanner Instance of ErgoScanner to use.
    * @param {AbstractLogger} logger instance.
    */
-  constructor(
-    ergoScanner: ErgoScanner,
-    logger: AbstractLogger = new DummyLogger(),
-  ) {
+  constructor(logger: AbstractLogger = new DummyLogger()) {
     super(logger);
-    this.ergoScanner = ergoScanner;
   }
 
   /**
@@ -157,25 +168,10 @@ export class ErgoExtractorService extends AbstractService {
    * @param {AbstractLogger} [logger]
    * @memberof ErgoExtractorService
    */
-  static init = async (
-    ergoScanner: ErgoScanner,
-    logger?: AbstractLogger,
-  ): Promise<void> => {
-    if (this.instance != undefined) {
+  static init = async (logger?: AbstractLogger): Promise<void> => {
+    if (AbstractErgoExtractorsService.instance != undefined) {
       return;
     }
-    this.instance = new ErgoExtractorService(ergoScanner, logger);
-  };
-
-  /**
-   * Returns the singleton instance.
-   * @returns {ErgoExtractorService} The initialized instance.
-   * @throws {Error} If the instance has not been initialized yet.
-   */
-  static getInstance = (): ErgoExtractorService => {
-    if (!this.instance) {
-      throw new Error(`${this.name} instances is not initialized yet`);
-    }
-    return this.instance;
+    AbstractErgoExtractorsService.instance = new ErgoExtractorService(logger);
   };
 }

@@ -51,7 +51,7 @@
     "@rosen-bridge/log-level-check": "^4.0.0",
     "@rosen-bridge/scanner-interfaces": "^0.2.2",
     "@rosen-bridge/scanner-sync-check": "^8.2.0",
-    "@rosen-bridge/service-manager": "^1.0.2",
+    "@rosen-bridge/service-manager": "^2.0.0-48070430",
     "@rosen-bridge/watcher-data-extractor": "^13.0.4",
     "@rosen-bridge/winston-logger": "^3.0.0",
     "@rosen-clients/ergo-explorer": "^2.1.1",

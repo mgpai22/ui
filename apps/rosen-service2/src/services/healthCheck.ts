@@ -10,6 +10,7 @@ import { ScannerSyncHealthCheckParam } from '@rosen-bridge/scanner-sync-check';
 import {
   Dependency,
   PeriodicTaskService,
+  ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { NETWORKS } from '@rosen-ui/constants';
@@ -26,31 +27,38 @@ import {
   ETHEREUM_BLOCK_TIME,
 } from '../constants';
 import { ChainsKeys } from '../types';
-import { DBService } from './db';
+import { AbstractDBService } from './abstrctDb';
 import { ScannerService } from './scanner';
 
 export class HealthService extends PeriodicTaskService {
   name = 'HealthService';
 
   private static instance: HealthService;
-  readonly dbService: DBService;
+  readonly dbService: AbstractDBService;
   readonly scannerService: ScannerService;
   protected healthCheck: HealthCheck;
   protected params: AbstractHealthCheckParam[] = [];
   protected dependencies: Dependency[] = [
     {
-      serviceName: DBService.name,
+      serviceName: AbstractDBService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
     {
       serviceName: ScannerService.name,
       allowedStatuses: [ServiceStatus.started],
+      action: ServiceAction.start,
     },
   ];
 
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    return true;
+  };
+
   private constructor(logger?: AbstractLogger) {
     super(logger);
-    this.dbService = DBService.getInstance();
+    this.dbService = AbstractDBService.getInstance();
     this.scannerService = ScannerService.getInstance();
 
     let notify;

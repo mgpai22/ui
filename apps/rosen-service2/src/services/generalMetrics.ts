@@ -2,28 +2,35 @@ import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import {
   Dependency,
   PeriodicTaskService,
+  ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { generalMetrics } from '@rosen-ui/rosen-statistics';
 
 import { configs } from '../configs';
-import { DBService } from './db';
+import { AbstractDBService } from './abstrctDb';
 import { TokenMapService } from './tokenMap';
 
 export class GeneralMetricsService extends PeriodicTaskService {
   name = 'GeneralMetricsService';
   private static instance: GeneralMetricsService;
-  readonly dbService: DBService;
+  readonly dbService: AbstractDBService;
   protected dependencies: Dependency[] = [
     {
-      serviceName: DBService.name,
+      serviceName: AbstractDBService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
   ];
 
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    return true;
+  };
+
   private constructor(logger?: AbstractLogger) {
     super(logger);
-    this.dbService = DBService.getInstance();
+    this.dbService = AbstractDBService.getInstance();
   }
 
   /**
@@ -66,7 +73,7 @@ export class GeneralMetricsService extends PeriodicTaskService {
 
     try {
       await generalMetrics(
-        this.dbService.dataSource,
+        this.dbService.getDataSource(),
         tokenMap,
         rsnTokenId,
         this.logger.child('generalMetricsJob'),

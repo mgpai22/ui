@@ -4,8 +4,8 @@ import { ErgoUTXOExtractor } from '@rosen-bridge/address-extractor';
 import { ErgoScanner } from '@rosen-bridge/ergo-scanner';
 import { ExtendedTokenMap, TokenMap } from '@rosen-bridge/extended-tokens';
 import {
-  AbstractService,
   Dependency,
+  ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { createClient, VercelKV } from '@vercel/kv';
@@ -22,26 +22,37 @@ import {
   TOKEN_MAP_REDIS_KEY,
 } from '../constants';
 import { resolveErgoNetworkConfig } from '../utils';
+import { AbstractErgoScannerService } from './abstractErgoScanner';
+import { AbstractTokenMapService } from './abstractTokenMapService';
+import { AbstractDBService } from './abstrctDb';
 import { DBService } from './db';
 
-export class TokenMapService extends AbstractService {
+export class TokenMapService extends AbstractTokenMapService {
   name = 'TokenMapService';
-  private static instance: TokenMapService;
+  tokenMap: TokenMap;
   private ergoScanner: ErgoScanner;
-  private tokenMap: TokenMap;
-  protected dependencies: Dependency[] = [];
+  protected dependencies: Dependency[] = [
+    {
+      serviceName: AbstractErgoScannerService.getInstance().getName(),
+      allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.assemble,
+    },
+  ];
 
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+
+    this.ergoScanner =
+      AbstractErgoScannerService.getInstance().getErgoScanner();
+    return true;
+  };
   /**
    * constructor for tokenMap service
    * @param {ErgoScanner} ergoScanner Scanner instance to register extractors.
    * @param {AbstractLogger} logger.
    */
-  private constructor(
-    ergoScanner: ErgoScanner,
-    logger: AbstractLogger = new DummyLogger(),
-  ) {
+  private constructor(logger: AbstractLogger = new DummyLogger()) {
     super(logger);
-    this.ergoScanner = ergoScanner;
   }
 
   /**
@@ -52,22 +63,11 @@ export class TokenMapService extends AbstractService {
    * @param {AbstractLogger} [logger]
    * @memberof TokenMapService
    */
-  static init = (ergoScanner: ErgoScanner, logger?: AbstractLogger) => {
-    if (this.instance != undefined) {
+  static init = (logger?: AbstractLogger) => {
+    if (AbstractTokenMapService.instance != undefined) {
       return;
     }
-    this.instance = new TokenMapService(ergoScanner, logger);
-  };
-
-  /**
-   * Returns the singleton instance of service.
-   * @returns {TokenMapService} The initialized service instance.
-   */
-  static getInstance = (): TokenMapService => {
-    if (!this.instance) {
-      throw new Error(`${this.name} instances is not initialized yet`);
-    }
-    return this.instance;
+    AbstractTokenMapService.instance = new TokenMapService(logger);
   };
 
   /**
@@ -130,7 +130,7 @@ export class TokenMapService extends AbstractService {
     }
     const { networkType, url } = resolveErgoNetworkConfig();
     const tokenMapBoxExtractor = new ErgoUTXOExtractor(
-      DBService.getInstance().dataSource,
+      AbstractDBService.getInstance().getDataSource(),
       TOKEN_MAP_EXTRACTOR_ID,
       ergoLib.NetworkPrefix.Mainnet,
       url,

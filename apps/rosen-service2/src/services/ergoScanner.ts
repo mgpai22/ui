@@ -12,7 +12,7 @@ import { DataSource } from '@rosen-bridge/extended-typeorm';
 import { Transaction } from '@rosen-bridge/scanner-interfaces';
 import {
   Dependency,
-  PeriodicTaskService,
+  ServiceAction,
   ServiceStatus,
   Task,
 } from '@rosen-bridge/service-manager';
@@ -20,16 +20,18 @@ import 'constants';
 
 import { configs } from '../configs';
 import { ERGO_METHOD_EXPLORER } from '../constants';
-import { ErgoExtractorService } from './ergoExtractor';
+import { AbstractErgoScannerService } from './abstractErgoScanner';
+import { AbstractDBService } from './abstrctDb';
+import { DBService } from './db';
 
-export class ErgoScannerService extends PeriodicTaskService {
+export class ErgoScannerService extends AbstractErgoScannerService {
   name = 'ErgoScannerService';
-  private static instance: ErgoScannerService;
-  private ergoScanner: ErgoScanner;
+  ergoScanner: ErgoScanner;
   protected dependencies: Dependency[] = [
     {
-      serviceName: ErgoExtractorService.name,
+      serviceName: AbstractDBService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
   ];
 
@@ -50,18 +52,27 @@ export class ErgoScannerService extends PeriodicTaskService {
     ];
   };
 
+  assemble = async (): Promise<boolean> => {
+    try {
+      this.ergoScanner = this.createErgoScanner(
+        DBService.getInstance().getDataSource(),
+      );
+      this.setStatus(ServiceStatus.dormant);
+
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   /**
    * Creates a new ErgoScannerService instance.
    *
    * @param {DataSource} dataSource Database data source used by the scanner.
    * @param {AbstractLogger} [logger=new DummyLogger()] Optional logger instance.
    */
-  constructor(
-    dataSource: DataSource,
-    logger: AbstractLogger = new DummyLogger(),
-  ) {
+  constructor(logger: AbstractLogger = new DummyLogger()) {
     super(logger);
-    this.ergoScanner = this.createErgoScanner(dataSource);
   }
 
   /**
@@ -70,33 +81,19 @@ export class ErgoScannerService extends PeriodicTaskService {
    * @param {DataSource} dataSource Database data source.
    * @param {AbstractLogger} [logger] Optional logger instance.
    */
-  static init = async (
-    dataSource: DataSource,
-    logger?: AbstractLogger,
-  ): Promise<void> => {
-    if (this.instance != undefined) {
+  static init = async (logger?: AbstractLogger): Promise<void> => {
+    if (AbstractErgoScannerService.instance != undefined) {
       return;
     }
-    this.instance = new ErgoScannerService(dataSource, logger);
-  };
-
-  /**
-   * Returns the singleton instance of the service.
-   * @returns {ErgoScannerService} The initialized instance.
-   * @throws {Error} If the service has not been initialized.
-   */
-  static getInstance = (): ErgoScannerService => {
-    if (!this.instance) {
-      throw new Error(`${this.name} instances is not initialized yet`);
-    }
-    return this.instance;
+    AbstractErgoScannerService.instance = new ErgoScannerService(logger);
+    console.log(AbstractErgoScannerService.getInstance().getName());
   };
 
   /**
    * Returns the underlying ErgoScanner instance.
    * @returns {ErgoScanner} The scanner instance.
    */
-  public getErgoScanner = (): ErgoScanner => {
+  getErgoScanner = (): ErgoScanner => {
     return this.ergoScanner;
   };
 

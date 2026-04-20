@@ -29,22 +29,19 @@ const startApp = async () => {
   serviceManager.register(DBService.getInstance());
   logger.debug('Database service registered to the service manager');
   logger.debug('Initializing ergo scanner service');
-  ErgoScannerService.init(
-    dataSource,
+  await ErgoScannerService.init(
     DefaultLogger.getInstance().child('ErgoScannerService'),
   );
   serviceManager.register(ErgoScannerService.getInstance());
   logger.debug('ergoScanner service registered to the service manager');
   logger.debug('Initializing tokenMap scanner service');
-  TokenMapService.init(
-    ErgoScannerService.getInstance().getErgoScanner(),
+  await TokenMapService.init(
     DefaultLogger.getInstance().child('TokenMapService'),
   );
   serviceManager.register(TokenMapService.getInstance());
   logger.debug('tokenMap service registered to the service manager');
   logger.debug('Initializing ergo extractor scanner service');
-  ErgoExtractorService.init(
-    ErgoScannerService.getInstance().getErgoScanner(),
+  await ErgoExtractorService.init(
     DefaultLogger.getInstance().child('ErgoExtractorService'),
   );
   serviceManager.register(ErgoExtractorService.getInstance());

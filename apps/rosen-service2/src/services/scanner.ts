@@ -5,6 +5,7 @@ import {
   PeriodicTaskService,
   Dependency,
   ServiceStatus,
+  ServiceAction,
 } from '@rosen-bridge/service-manager';
 import { NETWORKS } from '@rosen-ui/constants';
 
@@ -30,7 +31,8 @@ import {
   buildCardanoOgmiosScannerWithExtractors,
 } from '../scanners';
 import { ChainScannersType, ChainsKeys } from '../types';
-import { DBService } from './db';
+import { AbstractErgoScannerService } from './abstractErgoScanner';
+import { AbstractDBService } from './abstrctDb';
 import { ErgoScannerService } from './ergoScanner';
 import { TokenMapService } from './tokenMap';
 
@@ -38,25 +40,33 @@ export class ScannerService extends PeriodicTaskService {
   name = 'ScannerService';
   private static instance: ScannerService;
   protected scanners: { [k1 in ChainsKeys]?: ChainScannersType } = {};
-  readonly dbService: DBService;
+  readonly dbService: AbstractDBService;
   protected dependencies: Dependency[] = [
     {
-      serviceName: DBService.name,
+      serviceName: AbstractDBService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
     {
       serviceName: ErgoScannerService.name,
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
     {
       serviceName: TokenMapService.name,
       allowedStatuses: [ServiceStatus.running],
+      action: ServiceAction.start,
     },
   ];
 
+  assemble = async (): Promise<boolean> => {
+    this.setStatus(ServiceStatus.dormant);
+    return true;
+  };
+
   private constructor(logger?: AbstractLogger) {
     super(logger);
-    this.dbService = DBService.getInstance();
+    this.dbService = AbstractDBService.getInstance();
   }
 
   /**
@@ -66,7 +76,8 @@ export class ScannerService extends PeriodicTaskService {
    * @returns {ExtraChainScannersType | undefined} Scanner instance for the chain
    */
   public getScanner = (chain: ChainsKeys) => {
-    this.scanners.ergo = ErgoScannerService.getInstance().getErgoScanner();
+    this.scanners.ergo =
+      AbstractErgoScannerService.getInstance().getErgoScanner();
     return this.scanners[chain];
   };
 
@@ -95,19 +106,19 @@ export class ScannerService extends PeriodicTaskService {
           case CARDANO_METHOD_BLOCKFROST:
             this.scanners[NETWORKS.cardano.key] =
               await buildCardanoBlockFrostScannerWithExtractors(
-                this.dbService.dataSource,
+                this.dbService.getDataSource(),
               );
             break;
           case CARDANO_METHOD_OGMIOS:
             this.scanners[NETWORKS.cardano.key] =
               await buildCardanoOgmiosScannerWithExtractors(
-                this.dbService.dataSource,
+                this.dbService.getDataSource(),
               );
             break;
           case CARDANO_METHOD_KOIOS:
             this.scanners[NETWORKS.cardano.key] =
               await buildCardanoKoiosScannerWithExtractors(
-                this.dbService.dataSource,
+                this.dbService.getDataSource(),
               );
             break;
         }
@@ -120,13 +131,13 @@ export class ScannerService extends PeriodicTaskService {
           case BITCOIN_METHOD_ESPLORA:
             this.scanners[NETWORKS.bitcoin.key] =
               await buildBitcoinEsploraScannerWithExtractors(
-                this.dbService.dataSource,
+                this.dbService.getDataSource(),
               );
             break;
           case BITCOIN_METHOD_RPC:
             this.scanners[NETWORKS.bitcoin.key] =
               await buildBitcoinRpcScannerWithExtractors(
-                this.dbService.dataSource,
+                this.dbService.getDataSource(),
               );
             break;
         }
@@ -136,13 +147,13 @@ export class ScannerService extends PeriodicTaskService {
           case DOGE_METHOD_ESPLORA:
             this.scanners[NETWORKS.doge.key] =
               await buildDogeEsploraScannerWithExtractors(
-                this.dbService.dataSource,
+                this.dbService.getDataSource(),
               );
             break;
           case DOGE_METHOD_RPC:
             this.scanners[NETWORKS.doge.key] =
               await buildDogeRpcScannerWithExtractors(
-                this.dbService.dataSource,
+                this.dbService.getDataSource(),
               );
             break;
         }
@@ -150,12 +161,14 @@ export class ScannerService extends PeriodicTaskService {
       if (configs.chains.ethereum.active) {
         this.scanners[NETWORKS.ethereum.key] =
           await buildEthereumEvmScannerWithExtractors(
-            this.dbService.dataSource,
+            this.dbService.getDataSource(),
           );
       }
       if (configs.chains.binance.active) {
         this.scanners[NETWORKS.binance.key] =
-          await buildBinanceRpcScannerWithExtractors(this.dbService.dataSource);
+          await buildBinanceRpcScannerWithExtractors(
+            this.dbService.getDataSource(),
+          );
       }
     } catch (error) {
       throw new Error(
