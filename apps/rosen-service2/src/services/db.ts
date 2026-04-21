@@ -6,7 +6,7 @@ import { LastSavedBlock } from '@rosen-bridge/scanner-sync-check';
 import { Dependency, ServiceStatus } from '@rosen-bridge/service-manager';
 
 import { TOKEN_MAP_EXTRACTOR_ID } from '../constants';
-import { AbstractDBService } from './abstrctDb';
+import { AbstractDBService } from './types/abstrctDb';
 
 export class DBService extends AbstractDBService {
   name = 'DBService';

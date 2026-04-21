@@ -2,7 +2,6 @@ import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import { WebSocketScanner } from '@rosen-bridge/abstract-scanner';
 import { CardanoOgmiosScanner } from '@rosen-bridge/cardano-scanner';
 import {
-  PeriodicTaskService,
   Dependency,
   ServiceStatus,
   ServiceAction,
@@ -31,14 +30,13 @@ import {
   buildCardanoOgmiosScannerWithExtractors,
 } from '../scanners';
 import { ChainScannersType, ChainsKeys } from '../types';
-import { AbstractErgoScannerService } from './abstractErgoScanner';
-import { AbstractDBService } from './abstrctDb';
-import { ErgoScannerService } from './ergoScanner';
-import { TokenMapService } from './tokenMap';
+import { AbstractErgoScannerService } from './types/abstractErgoScanner';
+import { AbstractScannerService } from './types/abstractScannerService';
+import { AbstractTokenMapService } from './types/abstractTokenMapService';
+import { AbstractDBService } from './types/abstrctDb';
 
-export class ScannerService extends PeriodicTaskService {
+export class ScannerService extends AbstractScannerService {
   name = 'ScannerService';
-  private static instance: ScannerService;
   protected scanners: { [k1 in ChainsKeys]?: ChainScannersType } = {};
   readonly dbService: AbstractDBService;
   protected dependencies: Dependency[] = [
@@ -48,12 +46,12 @@ export class ScannerService extends PeriodicTaskService {
       action: ServiceAction.start,
     },
     {
-      serviceName: ErgoScannerService.name,
+      serviceName: AbstractErgoScannerService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
       action: ServiceAction.start,
     },
     {
-      serviceName: TokenMapService.name,
+      serviceName: AbstractTokenMapService.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
       action: ServiceAction.start,
     },
@@ -186,24 +184,10 @@ export class ScannerService extends PeriodicTaskService {
    * @memberof ScannerService
    */
   static readonly init = async (logger?: AbstractLogger) => {
-    if (this.instance != undefined) {
+    if (AbstractScannerService.instance != undefined) {
       return;
     }
-    this.instance = new ScannerService(logger);
-  };
-
-  /**
-   * return the singleton instance of ScannerService
-   *
-   * @static
-   * @return {ScannerService}
-   * @memberof ScannerService
-   */
-  static readonly getInstance = (): ScannerService => {
-    if (!this.instance) {
-      throw new Error('ScannerService instances is not initialized yet');
-    }
-    return this.instance;
+    AbstractScannerService.instance = new ScannerService(logger);
   };
 
   /**

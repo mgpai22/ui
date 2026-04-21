@@ -1,7 +1,6 @@
 import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import {
   Dependency,
-  PeriodicTaskService,
   ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
@@ -15,7 +14,6 @@ import {
   ErgoExplorerDataAdapter,
   EthereumEvmRpcDataAdapter,
 } from '@rosen-ui/asset-data-adapter';
-import { ChainsAdapters } from '@rosen-ui/asset-data-adapter';
 import { AssetBalance } from '@rosen-ui/asset-data-adapter/dist/types';
 import { NETWORKS, NETWORKS_KEYS } from '@rosen-ui/constants';
 import { createClient } from '@vercel/kv';
@@ -24,15 +22,13 @@ import { configs } from '../configs';
 import { TOTAL_SUPPLY_REDIS_KEY } from '../constants';
 import { ChainChoices, Chains, TotalSupply } from '../types';
 import { stringSerializer } from '../utils';
-import { AbstractTokenMapService } from './abstractTokenMapService';
-import { AbstractDBService } from './abstrctDb';
-import { TokenMapService } from './tokenMap';
+import { AbstractAssetDataAdapterService } from './types/abstractAssetDataAdapterService';
+import { AbstractTokenMapService } from './types/abstractTokenMapService';
+import { AbstractDBService } from './types/abstrctDb';
 
-export class AssetDataAdapterService extends PeriodicTaskService {
+export class AssetDataAdapterService extends AbstractAssetDataAdapterService {
   name = 'AssetDataAdapterService';
-  private static instance: AssetDataAdapterService;
   readonly redis;
-  protected adapters: { [key: string]: ChainsAdapters } = {};
   protected explorerApi;
   protected dependencies: Dependency[] = [
     {
@@ -93,7 +89,7 @@ export class AssetDataAdapterService extends PeriodicTaskService {
    * const adapter = createDataAdapter(NETWORKS.bitcoin.key, { url: "https://blockstream.info" });
    */
   protected createChainSpecificDataAdapter = (chain: ChainChoices) => {
-    const tokenMap = TokenMapService.getInstance().getTokenMap();
+    const tokenMap = AbstractTokenMapService.getInstance().getTokenMap();
 
     const addresses: string[] = [
       configs.contracts[chain].addresses.lock,
@@ -266,26 +262,12 @@ export class AssetDataAdapterService extends PeriodicTaskService {
    * @memberof AssetDataAdapterService
    */
   static readonly init = async (logger?: AbstractLogger) => {
-    if (this.instance != undefined) {
+    if (AbstractAssetDataAdapterService.instance != undefined) {
       return;
     }
-    this.instance = new AssetDataAdapterService(logger);
-  };
-
-  /**
-   * return the singleton instance of AssetDataAdapterService
-   *
-   * @static
-   * @return {AssetDataAdapterService}
-   * @memberof AssetDataAdapterService
-   */
-  static readonly getInstance = (): AssetDataAdapterService => {
-    if (!this.instance) {
-      throw new Error(
-        'AssetDataAdapterService instances is not initialized yet',
-      );
-    }
-    return this.instance;
+    AbstractAssetDataAdapterService.instance = new AssetDataAdapterService(
+      logger,
+    );
   };
 
   /**

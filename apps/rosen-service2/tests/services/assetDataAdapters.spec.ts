@@ -9,13 +9,14 @@ import { describe, it, beforeEach, expect, vi, Mock } from 'vitest';
 import { AssetDataAdapterService } from '../../src/services/assetDataAdapters';
 import { DBService } from '../../src/services/db';
 import { TokenMapService } from '../../src/services/tokenMap';
+import { AbstractAssetDataAdapterService } from '../../src/services/types/abstractAssetDataAdapterService';
 import {
   expectedErgoGetAssetsTotalSupplyResult,
   sampleTokenMapConfig,
 } from './assetDataAdaptersTestData';
 
 interface TestContext {
-  service: AssetDataAdapterService;
+  service: AbstractAssetDataAdapterService;
   mockTokenMap: TokenMap;
   mockExplorer: { v1: { [k: string]: Mock } };
 }
@@ -57,7 +58,7 @@ describe('AssetDataAdapterService', () => {
       DBService.init(dataSource);
 
       await AssetDataAdapterService.init();
-      ctx.service = AssetDataAdapterService.getInstance();
+      ctx.service = AbstractAssetDataAdapterService.getInstance();
 
       ctx.mockExplorer = mockExplorer;
     });

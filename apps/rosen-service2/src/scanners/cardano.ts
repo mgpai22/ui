@@ -18,9 +18,9 @@ import {
   KoiosTransaction,
 } from '@rosen-bridge/cardano-scanner';
 import { DataSource } from '@rosen-bridge/extended-typeorm';
+import { AbstractTokenMapService } from 'services/types/abstractTokenMapService';
 
 import { configs } from '../configs';
-import { TokenMapService } from '../services/tokenMap';
 
 const logger = DefaultLogger.getInstance().child(import.meta.url);
 
@@ -55,7 +55,7 @@ export const buildCardanoKoiosScannerWithExtractors = async (
   });
 
   try {
-    const tokenMap = TokenMapService.getInstance().getTokenMap();
+    const tokenMap = AbstractTokenMapService.getInstance().getTokenMap();
 
     logger.debug('Creating Cardano observation extractor...');
     const observationExtractor = new CardanoKoiosObservationExtractor(
@@ -113,7 +113,7 @@ export const buildCardanoBlockFrostScannerWithExtractors = async (
   });
 
   try {
-    const tokenMap = TokenMapService.getInstance().getTokenMap();
+    const tokenMap = AbstractTokenMapService.getInstance().getTokenMap();
 
     logger.debug('Creating Cardano observation extractor...');
     const observationExtractor = new CardanoBlockFrostObservationExtractor(
@@ -165,7 +165,7 @@ export const buildCardanoOgmiosScannerWithExtractors = async (
   );
 
   try {
-    const tokenMap = TokenMapService.getInstance().getTokenMap();
+    const tokenMap = AbstractTokenMapService.getInstance().getTokenMap();
 
     logger.debug('Creating Cardano observation extractor...');
     const observationExtractor = new CardanoOgmiosObservationExtractor(

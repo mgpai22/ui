@@ -1,19 +1,18 @@
 import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import {
   Dependency,
-  PeriodicTaskService,
   ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { lockedAssetsMetric } from '@rosen-ui/rosen-statistics';
 
 import { configs } from '../configs';
-import { AbstractDBService } from './abstrctDb';
-import { AssetAggregatorService } from './assetAggregator';
+import { AbstractAssetAggregator } from './types/abstractAssetAggregator';
+import { AbstractLockedAssetsMetricService } from './types/abstractLockedAssetsMetricService';
+import { AbstractDBService } from './types/abstrctDb';
 
-export class LockedAssetsMetricService extends PeriodicTaskService {
+export class LockedAssetsMetricService extends AbstractLockedAssetsMetricService {
   name = 'LockedAssetsMetricService';
-  private static instance: LockedAssetsMetricService;
   readonly dbService: AbstractDBService;
   protected dependencies: Dependency[] = [
     {
@@ -22,7 +21,7 @@ export class LockedAssetsMetricService extends PeriodicTaskService {
       action: ServiceAction.start,
     },
     {
-      serviceName: AssetAggregatorService.name,
+      serviceName: AbstractAssetAggregator.getInstance().getName(),
       allowedStatuses: [ServiceStatus.running],
       action: ServiceAction.start,
     },
@@ -46,24 +45,12 @@ export class LockedAssetsMetricService extends PeriodicTaskService {
    * @memberof LockedAssetsMetricService
    */
   static init = (logger?: AbstractLogger) => {
-    if (this.instance != undefined) {
+    if (AbstractLockedAssetsMetricService.instance != undefined) {
       return;
     }
-    this.instance = new LockedAssetsMetricService(logger);
-  };
-
-  /**
-   * Returns the singleton instance of locked assets metric service
-   *
-   * @static
-   * @return {LockedAssetsMetricService} The singleton instance
-   * @memberof LockedAssetsMetricService
-   */
-  static getInstance = (): LockedAssetsMetricService => {
-    if (!this.instance) {
-      throw new Error(`${this.name} instance is not initialized yet`);
-    }
-    return this.instance;
+    AbstractLockedAssetsMetricService.instance = new LockedAssetsMetricService(
+      logger,
+    );
   };
 
   /**

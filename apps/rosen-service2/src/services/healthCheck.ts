@@ -9,7 +9,6 @@ import { LogLevelHealthCheck } from '@rosen-bridge/log-level-check';
 import { ScannerSyncHealthCheckParam } from '@rosen-bridge/scanner-sync-check';
 import {
   Dependency,
-  PeriodicTaskService,
   ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
@@ -27,15 +26,15 @@ import {
   ETHEREUM_BLOCK_TIME,
 } from '../constants';
 import { ChainsKeys } from '../types';
-import { AbstractDBService } from './abstrctDb';
 import { ScannerService } from './scanner';
+import { AbstractHealthService } from './types/abstractHealthService';
+import { AbstractScannerService } from './types/abstractScannerService';
+import { AbstractDBService } from './types/abstrctDb';
 
-export class HealthService extends PeriodicTaskService {
+export class HealthService extends AbstractHealthService {
   name = 'HealthService';
-
-  private static instance: HealthService;
   readonly dbService: AbstractDBService;
-  readonly scannerService: ScannerService;
+  readonly scannerService: AbstractScannerService;
   protected healthCheck: HealthCheck;
   protected params: AbstractHealthCheckParam[] = [];
   protected dependencies: Dependency[] = [
@@ -59,7 +58,7 @@ export class HealthService extends PeriodicTaskService {
   private constructor(logger?: AbstractLogger) {
     super(logger);
     this.dbService = AbstractDBService.getInstance();
-    this.scannerService = ScannerService.getInstance();
+    this.scannerService = AbstractScannerService.getInstance();
 
     let notify;
     let notificationConfig;
@@ -156,24 +155,10 @@ export class HealthService extends PeriodicTaskService {
    * @memberof HealthService
    */
   static readonly init = (logger?: AbstractLogger) => {
-    if (this.instance != undefined) {
+    if (AbstractHealthService.instance != undefined) {
       return;
     }
-    this.instance = new HealthService(logger);
-  };
-
-  /**
-   * return the singleton instance of HealthService
-   *
-   * @static
-   * @return {HealthService}
-   * @memberof HealthService
-   */
-  static readonly getInstance = (): HealthService => {
-    if (!this.instance) {
-      throw new Error('HealthService instances is not initialized yet');
-    }
-    return this.instance;
+    AbstractHealthService.instance = new HealthService(logger);
   };
 
   /**

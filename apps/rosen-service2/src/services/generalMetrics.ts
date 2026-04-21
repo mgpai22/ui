@@ -1,19 +1,18 @@
 import { AbstractLogger } from '@rosen-bridge/abstract-logger';
 import {
   Dependency,
-  PeriodicTaskService,
   ServiceAction,
   ServiceStatus,
 } from '@rosen-bridge/service-manager';
 import { generalMetrics } from '@rosen-ui/rosen-statistics';
 
 import { configs } from '../configs';
-import { AbstractDBService } from './abstrctDb';
-import { TokenMapService } from './tokenMap';
+import { AbstractGeneralMetricsService } from './types/abstractGeneralMetricsService';
+import { AbstractTokenMapService } from './types/abstractTokenMapService';
+import { AbstractDBService } from './types/abstrctDb';
 
-export class GeneralMetricsService extends PeriodicTaskService {
+export class GeneralMetricsService extends AbstractGeneralMetricsService {
   name = 'GeneralMetricsService';
-  private static instance: GeneralMetricsService;
   readonly dbService: AbstractDBService;
   protected dependencies: Dependency[] = [
     {
@@ -41,24 +40,10 @@ export class GeneralMetricsService extends PeriodicTaskService {
    * @memberof GeneralMetricsService
    */
   static init = (logger?: AbstractLogger) => {
-    if (this.instance != undefined) {
+    if (AbstractGeneralMetricsService.instance != undefined) {
       return;
     }
-    this.instance = new GeneralMetricsService(logger);
-  };
-
-  /**
-   * Returns the singleton instance of MetricsService
-   *
-   * @static
-   * @return {GeneralMetricsService}
-   * @memberof GeneralMetricsService
-   */
-  static getInstance = (): GeneralMetricsService => {
-    if (!this.instance) {
-      throw new Error(`${this.name} instance is not initialized yet`);
-    }
-    return this.instance;
+    AbstractGeneralMetricsService.instance = new GeneralMetricsService(logger);
   };
 
   /**
@@ -68,7 +53,7 @@ export class GeneralMetricsService extends PeriodicTaskService {
    * @returns {Promise<void>}
    */
   private generalMetricsCalculation = async (): Promise<void> => {
-    const tokenMap = TokenMapService.getInstance().getTokenMap();
+    const tokenMap = AbstractTokenMapService.getInstance().getTokenMap();
     const rsnTokenId = configs.contracts.tokens.RSN;
 
     try {

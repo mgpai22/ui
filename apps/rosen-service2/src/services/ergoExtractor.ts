@@ -12,10 +12,10 @@ import { createEventTrigger } from 'scanners/ergo';
 import { resolveErgoNetworkConfig } from 'utils';
 
 import { configs } from '../configs';
-import { AbstractErgoExtractorsService } from './abstractErgoExtractor';
-import { AbstractErgoScannerService } from './abstractErgoScanner';
-import { AbstractTokenMapService } from './abstractTokenMapService';
-import { AbstractDBService } from './abstrctDb';
+import { AbstractErgoExtractorsService } from './types/abstractErgoExtractor';
+import { AbstractErgoScannerService } from './types/abstractErgoScanner';
+import { AbstractTokenMapService } from './types/abstractTokenMapService';
+import { AbstractDBService } from './types/abstrctDb';
 
 export class ErgoExtractorService extends AbstractErgoExtractorsService {
   private ergoScanner: ErgoScanner;

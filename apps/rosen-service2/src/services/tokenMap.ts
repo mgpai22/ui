@@ -22,10 +22,10 @@ import {
   TOKEN_MAP_REDIS_KEY,
 } from '../constants';
 import { resolveErgoNetworkConfig } from '../utils';
-import { AbstractErgoScannerService } from './abstractErgoScanner';
-import { AbstractTokenMapService } from './abstractTokenMapService';
-import { AbstractDBService } from './abstrctDb';
 import { DBService } from './db';
+import { AbstractErgoScannerService } from './types/abstractErgoScanner';
+import { AbstractTokenMapService } from './types/abstractTokenMapService';
+import { AbstractDBService } from './types/abstrctDb';
 
 export class TokenMapService extends AbstractTokenMapService {
   name = 'TokenMapService';

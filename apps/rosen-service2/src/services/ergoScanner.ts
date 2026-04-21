@@ -20,9 +20,8 @@ import 'constants';
 
 import { configs } from '../configs';
 import { ERGO_METHOD_EXPLORER } from '../constants';
-import { AbstractErgoScannerService } from './abstractErgoScanner';
-import { AbstractDBService } from './abstrctDb';
-import { DBService } from './db';
+import { AbstractErgoScannerService } from './types/abstractErgoScanner';
+import { AbstractDBService } from './types/abstrctDb';
 
 export class ErgoScannerService extends AbstractErgoScannerService {
   name = 'ErgoScannerService';
@@ -55,7 +54,7 @@ export class ErgoScannerService extends AbstractErgoScannerService {
   assemble = async (): Promise<boolean> => {
     try {
       this.ergoScanner = this.createErgoScanner(
-        DBService.getInstance().getDataSource(),
+        AbstractDBService.getInstance().getDataSource(),
       );
       this.setStatus(ServiceStatus.dormant);
 
