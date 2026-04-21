@@ -6,10 +6,22 @@ export abstract class AbstractAssetDataAdapterService extends PeriodicTaskServic
   protected static instance: AbstractAssetDataAdapterService;
   protected adapters: { [key: string]: ChainsAdapters } = {};
 
+  /**
+   * return the singleton instance of AbstractAssetDataAdapterService
+   *
+   * @static
+   * @return {AbstractAssetDataAdapterService}
+   * @memberof AbstractAssetDataAdapterService
+   */
   static getInstance = (): AbstractAssetDataAdapterService => {
     return AbstractAssetDataAdapterService.instance;
   };
 
+  /**
+   * calculate total supply of the wrapped-tokens
+   *
+   * @returns { {[chain: string]: TotalSupply[]} }
+   */
   abstract getAssetsTotalSupply: () => Promise<{
     [chain: string]: TotalSupply[];
   }>;

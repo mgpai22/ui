@@ -10,6 +10,7 @@ import { AssetDataAdapterService } from '../../src/services/assetDataAdapters';
 import { DBService } from '../../src/services/db';
 import { TokenMapService } from '../../src/services/tokenMap';
 import { AbstractAssetDataAdapterService } from '../../src/services/types/abstractAssetDataAdapterService';
+import { AbstractTokenMapService } from '../../src/services/types/abstractTokenMapService';
 import {
   expectedErgoGetAssetsTotalSupplyResult,
   sampleTokenMapConfig,
@@ -38,13 +39,14 @@ describe('AssetDataAdapterService', () => {
       ctx.mockTokenMap = new TokenMap();
       await ctx.mockTokenMap.updateConfigByJson(sampleTokenMapConfig);
       TokenMapService.init = vi.fn().mockImplementation(() => {
-        (TokenMapService as any).instance = {
+        (AbstractTokenMapService as any).instance = {
           tokenMap: ctx.mockTokenMap,
           logger: new DummyLogger(),
+          getName: () => 'Mocked Token Map Service',
         };
       });
       await TokenMapService.init();
-      TokenMapService.getInstance().getTokenMap = vi
+      AbstractTokenMapService.getInstance().getTokenMap = vi
         .fn()
         .mockReturnValue(ctx.mockTokenMap);
 

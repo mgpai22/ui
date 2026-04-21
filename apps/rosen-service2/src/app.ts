@@ -3,9 +3,11 @@ import { ServiceManager } from '@rosen-bridge/service-manager';
 import { AssetAggregatorService } from 'services/assetAggregator';
 import { ErgoExtractorService } from 'services/ergoExtractor';
 import { ErgoScannerService } from 'services/ergoScanner';
+import { EventCountMetricService } from 'services/eventCountMetric';
 import { GeneralMetricsService } from 'services/generalMetrics';
 import { LockedAssetsMetricService } from 'services/lockedAssetsMetric';
 import { TokenMapService } from 'services/tokenMap';
+import { UserEventsMetricService } from 'services/userEventsMetric';
 
 import dataSource from './data-source';
 import { AssetDataAdapterService } from './services/assetDataAdapters';
@@ -79,6 +81,20 @@ const startApp = async () => {
   logger.debug(
     'Locked assets metrics service registered to the service manager',
   );
+
+  logger.debug('Initializing event count metrics service');
+  EventCountMetricService.init(
+    DefaultLogger.getInstance().child('eventCountMetricsService'),
+  );
+  serviceManager.register(EventCountMetricService.getInstance());
+  logger.debug('Event count metrics service registered to the service manager');
+
+  logger.debug('Initializing user events metrics service');
+  UserEventsMetricService.init(
+    DefaultLogger.getInstance().child('userEventsMetricService'),
+  );
+  serviceManager.register(UserEventsMetricService.getInstance());
+  logger.debug('User events metrics service registered to the service manager');
 
   logger.debug('Initializing health-check service');
   HealthService.init(DefaultLogger.getInstance().child('healthCheckService'));

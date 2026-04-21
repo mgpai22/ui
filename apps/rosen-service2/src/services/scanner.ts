@@ -29,7 +29,7 @@ import {
   buildCardanoBlockFrostScannerWithExtractors,
   buildCardanoOgmiosScannerWithExtractors,
 } from '../scanners';
-import { ChainScannersType, ChainsKeys } from '../types';
+import { ChainScannersType, ChainsKeys, ChainsWithScanner } from '../types';
 import { AbstractErgoScannerService } from './types/abstractErgoScanner';
 import { AbstractScannerService } from './types/abstractScannerService';
 import { AbstractTokenMapService } from './types/abstractTokenMapService';
@@ -239,7 +239,8 @@ export class ScannerService extends AbstractScannerService {
             }
           }
         },
-        interval: configs.chains[chain as ChainsKeys].scanInterval * 1000,
+        interval:
+          configs.chains[chain as ChainsWithScanner].scanInterval * 1000,
       });
     }
     return tasks;

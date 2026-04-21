@@ -39,6 +39,11 @@ export class DBService extends AbstractDBService {
     throw new Error('No block found or error in database connection');
   };
 
+  /**
+   * return of dataSource
+   *
+   * @returns {DataSource} dataSource
+   */
   getDataSource = (): DataSource => {
     return this.dataSource;
   };

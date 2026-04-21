@@ -183,6 +183,11 @@ export class TokenMapService extends AbstractTokenMapService {
     });
   };
 
+  /**
+   * returns of tokenMap
+   *
+   * @returns {TokenMap} tokenMap
+   */
   getTokenMap = (): TokenMap => {
     return this.tokenMap;
   };

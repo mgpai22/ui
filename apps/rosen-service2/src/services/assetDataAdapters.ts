@@ -20,7 +20,7 @@ import { createClient } from '@vercel/kv';
 
 import { configs } from '../configs';
 import { TOTAL_SUPPLY_REDIS_KEY } from '../constants';
-import { ChainChoices, Chains, TotalSupply } from '../types';
+import { ChainChoices, TotalSupply } from '../types';
 import { stringSerializer } from '../utils';
 import { AbstractAssetDataAdapterService } from './types/abstractAssetDataAdapterService';
 import { AbstractTokenMapService } from './types/abstractTokenMapService';
@@ -324,8 +324,7 @@ export class AssetDataAdapterService extends AbstractAssetDataAdapterService {
                   stringSerializer(await adapter.fetch()),
                 );
               },
-        interval:
-          configs.chains[adapter.chain as keyof Chains].scanInterval * 1000,
+        interval: configs.dataAggregator.interval * 1000,
       });
     }
     return tasks;

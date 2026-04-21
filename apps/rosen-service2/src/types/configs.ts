@@ -1,10 +1,10 @@
 export interface RosenService2BaseConfig {
   paths: Paths;
   chains: Chains;
+  statistics: Statistics;
   tokenMap: TokenMap;
   dataAggregator: DataAggregator;
   healthCheck: HealthCheck;
-  statistics: Statistics;
   redis: Redis;
   db: Db;
   logs: Logs[];
@@ -62,12 +62,6 @@ export interface HealthCheckLogging {
 export interface DataAggregator {
   interval: number;
 }
-export interface lockedAssetsMetrics {
-  interval: number;
-}
-export interface GeneralMetrics {
-  interval: number;
-}
 
 export interface TokenMap {
   onChainTokenMapEnabled: boolean;
@@ -75,9 +69,28 @@ export interface TokenMap {
 }
 
 export interface Statistics {
-  generalMetrics: GeneralMetrics;
-  lockedAssetsMetrics: lockedAssetsMetrics;
+  lockedAssetsMetrics: StatisticsLockedAssetsMetrics;
+  generalMetrics: StatisticsGeneralMetrics;
+  eventCountMetrics: StatisticsEventCountMetrics;
+  userEventsMetric: StatisticsUserEventsMetric;
 }
+
+export interface StatisticsUserEventsMetric {
+  interval: number;
+}
+
+export interface StatisticsEventCountMetrics {
+  interval: number;
+}
+
+export interface StatisticsGeneralMetrics {
+  interval: number;
+}
+
+export interface StatisticsLockedAssetsMetrics {
+  interval: number;
+}
+
 export interface Chains {
   'ergo': ChainsErgo;
   'cardano': ChainsCardano;
@@ -179,7 +192,6 @@ export interface ChainsDogeAdapterBlockCypher {
 
 export interface ChainsBitcoinRunes {
   active: boolean;
-  scanInterval: number;
   adapter: ChainsBitcoinRunesAdapter;
   unisatUrl?: string;
   unisatApiKey?: string;
