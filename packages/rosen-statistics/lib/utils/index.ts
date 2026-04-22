@@ -1,5 +1,5 @@
 export { calculateBridgeFees } from './bridgeFeeCalculator';
-export { calculateWatcherCounts } from './calculateWatcherCounts ';
+export { calculateWatcherCounts } from './calculateWatcherCounts';
 export {
   getDecimalString,
   getNonDecimalString,
